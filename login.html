@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mimoly - Entrar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #111827;
+        }
+        
+        #message-box {
+            position: fixed;
+            top: -100px; 
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            opacity: 0; 
+            transition: top 0.5s ease-in-out, opacity 0.5s ease-in-out;
+        }
+        
+        .mimoly-logo {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            height: 80px;
+            z-index: 30;
+        }
+        @media (min-width: 768px) {
+            .mimoly-logo {
+                height: 100px;
+            }
+        }
+        #login-form input {
+            background-color: #374151;
+            border: 1px solid #4b5563;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            color: #f9fafb;
+        }
+        #login-form input:focus {
+            outline: none;
+            border-color: #ec4899;
+            box-shadow: 0 0 0 1px #ec4899;
+        }
+    </style>
+</head>
+<body class="text-gray-300 flex items-center justify-center min-h-screen">
+
+    <a href="./index.html" class="transform transition-transform hover:scale-105">
+        <img src="./images/mimoly-logo.png" alt="Logo Mimoly" class="mimoly-logo">
+    </a>
+
+    <div class="relative bg-gray-800 p-8 rounded-2xl shadow-2xl max-w-sm w-full">
+        <a href="./index.html" title="Voltar à página inicial" class="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
+            <i data-lucide="x"></i>
+        </a>
+        
+        <h2 class="text-3xl font-bold text-white mb-6 text-center">Entrar na Mimoly</h2>
+        <form id="login-form" class="space-y-4">
+            <div>
+                <label for="login-email" class="block text-sm font-medium text-gray-400 mb-1">E-mail</label>
+                <input type="email" id="login-email" placeholder="seuemail@exemplo.com" required class="w-full">
+            </div>
+            <div>
+                <label for="login-password" class="block text-sm font-medium text-gray-400 mb-1">Senha</label>
+                <input type="password" id="login-password" placeholder="Sua senha" required class="w-full">
+            </div>
+            
+            <div class="text-right">
+                <a href="#" id="forgot-password-link" class="text-sm text-pink-500 hover:underline font-semibold">Esqueceu a senha?</a>
+            </div>
+
+            <button type="submit" id="login-btn" class="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 rounded-lg transition-colors !mt-6">
+                Entrar
+            </button>
+        </form>
+        <p class="text-sm text-gray-400 mt-6 text-center">
+            Não tem uma conta? <a href="./index.html" class="text-pink-500 hover:underline font-semibold">Cadastre-se</a>
+        </p>
+        <div class="relative flex py-5 items-center">
+            <div class="flex-grow border-t border-gray-600"></div>
+            <span class="flex-shrink mx-4 text-gray-500">ou</span>
+            <div class="flex-grow border-t border-gray-600"></div>
+        </div>
+        <button id="google-login-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center space-x-3 transition-transform transform hover:scale-105">
+            <svg class="w-6 h-6" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C39.902,36.631,44,30.651,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
+            <span>Entrar com o Google</span>
+        </button>
+    </div>
+
+    <div id="message-box" class="bg-gray-800"></div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+<script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const googleProvider = new GoogleAuthProvider();
+    const loginForm = document.getElementById('login-form');
+    const loginEmailInput = document.getElementById('login-email');
+    const loginPasswordInput = document.getElementById('login-password');
+    const loginBtn = document.getElementById('login-btn');
+    const googleLoginBtn = document.getElementById('google-login-btn');
+    const messageBox = document.getElementById('message-box');
+    const forgotPasswordLink = document.getElementById('forgot-password-link');
+
+    function showMessage(message, isError = false) {
+        messageBox.textContent = message;
+        messageBox.style.backgroundColor = isError ? '#ef4444' : '#22c55e';
+        messageBox.style.top = '20px';
+        messageBox.style.opacity = '1';
+        setTimeout(() => {
+            messageBox.style.top = '-100px';
+            messageBox.style.opacity = '0';
+        }, 4000);
+    }
+
+    forgotPasswordLink.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const email = loginEmailInput.value.trim();
+        if (!email) {
+            showMessage("Por favor, digite seu e-mail para recuperar a senha.", true);
+            return;
+        }
+        try {
+            await sendPasswordResetEmail(auth, email);
+            showMessage("E-mail de recuperação enviado! Verifique sua caixa de entrada.");
+        } catch (error) {
+            let errorMessage = "Ocorreu um erro. Verifique o e-mail digitado.";
+             if (error.code === 'auth/user-not-found') {
+                errorMessage = "Nenhum usuário encontrado com este e-mail.";
+            }
+            showMessage(errorMessage, true);
+        }
+    });
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = loginEmailInput.value.trim();
+        const password = loginPasswordInput.value;
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Entrando...';
+
+        try {
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+            const userRef = doc(db, "users", user.uid);
+            const userDoc = await getDoc(userRef);
+
+            if (!userDoc.exists()) {
+                await setDoc(userRef, {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName || '',
+                    photoURL: '',
+                    curtidas: 0,
+                    saldoMimos: 0,
+                    saldoReais: 0,
+                    createdAt: serverTimestamp(),
+                    lastLogin: serverTimestamp(),
+                    profileComplete: false
+                });
+                window.location.href = './perfil.html?msg=complete-profile';
+            } else {
+                await updateDoc(userRef, { lastLogin: serverTimestamp() });
+                const userData = userDoc.data();
+                if (userData.profileComplete) {
+                    window.location.href = './app.html';
+                } else {
+                    window.location.href = './perfil.html?msg=complete-profile';
+                }
+            }
+        } catch (error) {
+            console.error("Erro no login:", error);
+            let errorMessage = "Ocorreu um erro ao tentar fazer o login.";
+            if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                errorMessage = "E-mail ou senha incorretos.";
+            } else if (error.code === 'auth/too-many-requests') {
+                errorMessage = "Muitas tentativas de login. Tente novamente mais tarde.";
+            }
+            showMessage(errorMessage, true);
+        } finally {
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Entrar';
+        }
+    });
+
+    // --- LÓGICA DE LOGIN COM GOOGLE CORRIGIDA ---
+    googleLoginBtn.addEventListener('click', async () => {
+        googleLoginBtn.disabled = true;
+        googleLoginBtn.querySelector('span').textContent = 'Carregando...';
+
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+            const userRef = doc(db, "users", user.uid);
+            const userDoc = await getDoc(userRef);
+
+            if (!userDoc.exists()) {
+                await setDoc(userRef, {
+                    uid: user.uid, displayName: user.displayName, email: user.email,
+                    photoURL: user.photoURL || '', curtidas: 0, saldoMimos: 0, saldoReais: 0,
+                    createdAt: serverTimestamp(), lastLogin: serverTimestamp(),
+                    profileComplete: false // Começa como incompleto para forçar o preenchimento de CPF, idade, etc.
+                });
+                window.location.href = '/perfil.html?msg=complete-profile';
+            } else {
+                await updateDoc(userRef, { lastLogin: serverTimestamp() });
+                const userData = userDoc.data();
+                if (userData.profileComplete) {
+                    window.location.href = '/app.html';
+                } else {
+                    window.location.href = '/perfil.html?msg=complete-profile';
+                }
+            }
+        } catch (error) {
+            console.error("Erro no login com Google:", error);
+            let errorMessage = "Ocorreu um erro ao tentar fazer o login com Google.";
+            if (error.code === 'auth/popup-closed-by-user') {
+                errorMessage = "O pop-up de login foi fechado.";
+            }
+            showMessage(errorMessage, true);
+        } finally {
+            googleLoginBtn.disabled = false;
+            googleLoginBtn.querySelector('span').textContent = 'Entrar com o Google';
+        }
+    });
+</script>
+</body>
+</html>

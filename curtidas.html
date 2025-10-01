@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mimoly - Quem te Curtiu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/styles.css">
+    <style> body { font-family: 'Poppins', sans-serif; } </style>
+</head>
+<body class="bg-gray-900 text-gray-200">
+
+    <header class="bg-black backdrop-blur-sm shadow-lg sticky top-0 z-50 w-full"></header>
+
+    <main class="container mx-auto px-6 py-8 min-h-screen">
+         <div class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl sm:text-3xl font-semibold text-white">Pessoas que curtiram você</h1>
+        </div>
+        <div id="users-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        </div>
+        
+        <div class="col-span-full text-center py-6">
+            <a href="#" id="load-more-btn" class="hidden text-pink-500 hover:text-white font-bold transition-colors">
+                Carregar Mais
+            </a>
+        </div>
+    </main>
+
+   <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { collection, doc, updateDoc, query, orderBy, getDocs, limit, startAfter } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { loadHeader } from './header-loader.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const usersGrid = document.getElementById('users-grid');
+        const loadMoreBtn = document.getElementById('load-more-btn');
+        const PAGE_SIZE = 5; // Limita a 5 perfis por página
+
+        let lastVisible = null;
+
+        const loadLikers = async (currentUser, lastVisibleDoc = null) => {
+            const isInitialLoad = !lastVisibleDoc;
+            if (isInitialLoad) {
+                usersGrid.innerHTML = `<div id="loading-spinner" class="col-span-full text-center py-10"><svg class="animate-spin h-10 w-10 text-pink-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p class="text-gray-400 mt-4">Buscando admiradores...</p></div>`;
+                loadMoreBtn.classList.add('hidden');
+            } else {
+                 loadMoreBtn.textContent = 'Carregando...';
+            }
+
+            try {
+                if (isInitialLoad) {
+                    const currentUserRef = doc(db, "users", currentUser.uid);
+                    await updateDoc(currentUserRef, { newLikesCount: 0 });
+                }
+
+                const likesReceivedRef = collection(db, "users", currentUser.uid, "likesReceived");
+                let q = query(likesReceivedRef, orderBy("likedAt", "desc"), limit(PAGE_SIZE));
+
+                if (lastVisibleDoc) {
+                    q = query(likesReceivedRef, orderBy("likedAt", "desc"), startAfter(lastVisibleDoc), limit(PAGE_SIZE));
+                }
+
+                const likesSnapshot = await getDocs(q); 
+                
+                if (likesSnapshot.empty) {
+                    if (isInitialLoad) {
+                         usersGrid.innerHTML = '<p class="col-span-full text-center text-gray-500">Ninguém curtiu seu perfil ainda. Continue explorando!</p>';
+                    }
+                    loadMoreBtn.classList.add('hidden');
+                    return;
+                }
+
+                lastVisible = likesSnapshot.docs[likesSnapshot.docs.length - 1];
+
+                const usersHTML = likesSnapshot.docs.map(doc => {
+                    const likeData = doc.data();
+                    const likerId = doc.id;
+                    
+                    return `
+                    <div class="relative group p-0.5 rounded-xl bg-gradient-to-br from-white/20 to-white/0 hover:from-pink-500 hover:to-purple-600 transition-all duration-300">
+                         <a href="/profile_details.html?userId=${likerId}" class="block relative rounded-lg overflow-hidden">
+                            <img src="${likeData.senderPhotoURL}" alt="${likeData.senderDisplayName}" class="w-full h-72 sm:h-96 object-cover transition-transform duration-300 group-hover:scale-110">
+                            <div class="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent"></div>
+                            <div class="absolute inset-x-0 bottom-0 p-4">
+                                <h2 class="text-xl font-semibold text-white truncate">${likeData.senderDisplayName}, ${likeData.senderIdade || ''}</h2>
+                                <p class="text-gray-200 text-sm truncate">${likeData.senderCidade ? `${likeData.senderCidade}` : ''}${likeData.senderEstado ? `, ${likeData.senderEstado}` : ''}</p>
+                            </div>
+                        </a>
+                    </div>`;
+                }).join('');
+                
+                if (isInitialLoad) {
+                     usersGrid.innerHTML = usersHTML;
+                } else {
+                     usersGrid.innerHTML += usersHTML;
+                }
+
+                if (likesSnapshot.docs.length < PAGE_SIZE) {
+                    loadMoreBtn.classList.add('hidden');
+                } else {
+                    loadMoreBtn.classList.remove('hidden');
+                    loadMoreBtn.textContent = 'Carregar Mais';
+                }
+                
+                lucide.createIcons();
+
+            } catch(error) {
+                console.error("Erro ao carregar quem curtiu:", error);
+                usersGrid.innerHTML = `<p class="col-span-full text-center text-red-400">Ocorreu um erro ao buscar os perfis, verifique se todos os seus dados estão completos no SEU perfil</p>`;
+                loadMoreBtn.classList.add('hidden');
+            }
+        };
+
+        loadMoreBtn.addEventListener('click', (e) => {
+    e.preventDefault(); // Esta linha previne que a página role para o topo
+
+    if (lastVisible) {
+        loadLikers(auth.currentUser, lastVisible);
+    }
+});
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                await loadHeader();
+                await loadLikers(user);
+            } else {
+                window.location.href = '/index.html';
+            }
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+  
+  // Função para validar um perfil de usuário completo
+function isProfileComplete(data) {
+  return 
+    // Valida informações pessoais
+    'displayName' in data && data.displayName is string && data.displayName.size() > 0 &&
+    'cpf' in data && data.cpf is string && data.cpf.size() >= 11 &&
+    'idade' in data && data.idade is number && data.idade >= 18 &&
+    'sexo' in data && data.sexo is string && data.sexo.size() > 0 &&
+    'cidade' in data && data.cidade is string && data.cidade.size() > 0 &&
+    'estado' in data && data.estado is string && data.estado.size() == 2 &&
+    'bio' in data && data.bio is string && data.bio.size() > 0 &&
+    
+    // Valida a foto principal
+    'photoURL' in data && data.photoURL is string && data.photoURL.size() > 0;
+}
+    
+    // Regras para a coleção 'users'
+    match /users/{userId} {
+    allow read: if request.auth.uid != null;
+    allow delete: if request.auth.uid == userId;    
+    allow create: if request.auth.uid == userId;    
+    allow update: if request.auth.uid == userId;      
+     
+    match /likesReceived/{likerId} {
+        // Qualquer um logado pode ver quem curtiu um perfil
+        allow read: if request.auth.uid == userId;
+        // Ninguém pode escrever diretamente aqui (só a Cloud Function)
+        allow write: if false;
+      }
+      
+      match /likesSent/{likedUserId} {
+         // Um usuário só pode ler e escrever na sua própria lista de curtidas enviadas
+         allow read, write: if request.auth.uid == userId;
+      }
+    }
+    
+    // Regras para a coleção 'chats'
+    match /chats/{chatId} {
+      // Apenas os participantes do chat podem ler e escrever.
+      allow read, write: if request.auth.uid in resource.data.participants;
+    }
+    
+    // As transações da carteira são subcoleções, portanto, as regras
+    // precisam ser definidas para elas também.
+    match /users/{userId}/walletTransactions/{transactionId} {
+      // Permite ler apenas o próprio extrato.
+      allow read: if request.auth.uid == userId;
+      
+      // Ninguém pode criar, atualizar ou deletar transações manualmente,
+      // pois isso é responsabilidade exclusiva das Cloud Functions.
+      allow create, update, delete: if false;
+    }
+  }
+}

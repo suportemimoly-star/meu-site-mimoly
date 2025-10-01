@@ -1,0 +1,63 @@
+<nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+    <a href="/app.html" class="transform transition-transform hover:scale-105">
+        <img src="/images/mimoly-logo.png" alt="Mimoly Logo" class="h-14 md:h-20">
+    </a>
+
+    <div class="hidden md:flex space-x-8">
+        <a href="/app.html" class="nav-link text-pink-500 font-medium hover:text-pink-400" data-page="app.html">Descobrir</a>
+        <a href="/curtidas.html" class="nav-link text-pink-500 font-medium hover:text-pink-400 relative" data-page="curtidas.html">
+            Curtidas
+            <span id="new-likes-count-desktop" class="hidden absolute top-0 right-0 inline-flex items-center justify-center h-5 min-w-[20px] rounded-full text-xs font-bold text-white bg-orange-500 transform translate-x-1/2 -translate-y-1/2">0</span>
+        </a>
+        <a href="/conversas.html" class="nav-link text-pink-500 font-medium hover:text-pink-400 relative" data-page="conversas.html">
+            Chats
+            <span id="unread-count-desktop" class="hidden absolute top-0 right-0 inline-flex items-center justify-center h-5 min-w-[20px] rounded-full text-xs font-bold text-white bg-pink-500 transform translate-x-1/2 -translate-y-1/2">0</span>
+        </a>
+        <a href="/loja.html" class="nav-link text-pink-500 font-medium hover:text-pink-400" data-page="loja.html">Loja de Mimos</a>
+        <a href="#" id="open-terms-modal-desktop" class="nav-link text-gray-300 font-medium hover:text-pink-400">Termos de Serviço</a>
+    </div>
+
+    <div class="flex items-center space-x-4">
+        <button id="open-filter-modal-btn" class="text-gray-300 hover:text-white transition-colors">
+            <i data-lucide="funnel" class="w-4 h-4 md:w-5 md:h-5"></i>
+        </button>
+
+        <div id="user-menu" class="hidden items-center space-x-3 relative">
+            <a href="/loja.html" class="flex items-center space-x-2 bg-gray-800 rounded-full px-3 py-1 shadow-inner cursor-pointer">
+                <i data-lucide="gem" class="w-5 h-5 md:w-6 md:h-6 text-pink-500"></i>
+                <span id="user-mimos-balance" class="text-sm md:text-base text-white font-semibold">0</span>
+            </a>
+            <img id="user-photo-header" src="https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07LwqYdTyH.jpg" alt="User Avatar" class="w-10 h-10 rounded-full cursor-pointer border-2 border-pink-500">
+            <div id="user-dropdown" class="absolute right-0 mt-40 w-48 bg-gray-800 rounded-lg shadow-xl py-2 hidden">
+                <p class="text-white px-4 py-2 text-sm font-semibold" id="user-name-header">Nome</p>
+                <hr class="border-gray-700 my-1">
+                <a href="/perfil.html" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Perfil</a>
+                <a href="/carteira.html" class="block px-4 py-2 text-gray-300 hover:bg-gray-700">Carteira</a>
+                <a id="logout-btn" href="#" class="block px-4 py-2 text-red-400 hover:bg-gray-700">Sair</a>
+            </div>
+        </div>
+    
+        <button id="mobile-menu-button" class="md:hidden text-gray-300 hover:text-white relative">
+           <i data-lucide="menu" class="w-8 h-8"></i>
+           <span id="total-notifications-mobile-icon" class="hidden absolute top-0 right-0 inline-flex items-center justify-center h-5 min-w-[20px] rounded-full text-xs font-bold text-white bg-red-500 transform translate-x-1/2 -translate-y-1/2"></span>
+        </button>
+    </div>
+</nav>
+
+<div id="mobile-menu" class="md:hidden bg-gray-800 px-2 pt-2 pb-3 space-y-1 sm:px-3 hidden">
+    <a href="/app.html" class="block px-3 py-2 rounded-md text-base font-medium text-pink-500 hover:bg-gray-700">Descobrir</a>
+    <a href="/curtidas.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 relative">
+        Curtidas
+        <span id="new-likes-count-mobile" class="hidden absolute top-1 right-2 inline-flex items-center justify-center h-5 min-w-[20px] rounded-full text-xs font-bold text-white bg-orange-500 transform translate-x-1/2 -translate-y-1/2">0</span>
+    </a>
+    <a href="/conversas.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700 relative">
+        Chats
+        <span id="unread-count-mobile" class="hidden absolute top-1 right-2 inline-flex items-center justify-center h-5 min-w-[20px] rounded-full text-xs font-bold text-white bg-pink-500 transform translate-x-1/2 -translate-y-1/2">0</span>
+    </a>
+    <a href="/loja.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700">Loja de Mimos</a>
+    <a href="#" id="open-terms-modal-mobile" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700">Termos de Serviço</a>
+    <hr class="border-gray-700 my-1">
+    <a href="/perfil.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700">Perfil</a>
+    <a href="/carteira.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-gray-700">Carteira</a>
+    <a id="logout-btn-mobile" href="#" class="block px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700">Sair</a>
+</div>

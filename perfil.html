@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mimoly - Meu Perfil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .file-input { display: none; }
+        #message-box {
+            position: fixed; bottom: -100px; left: 50%;
+            transform: translateX(-50%); padding: 1rem 2rem; border-radius: 0.5rem;
+            color: white; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: bottom 0.5s ease-in-out; z-index: 100;
+        }
+        #message-box.show { bottom: 20px; }
+        .cr-slider-wrap { margin-bottom: 1rem; }
+        select:disabled {
+            background-color: #4b5563;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+
+    <header class="bg-gray-800/80 backdrop-blur-sm shadow-lg sticky top-0 z-50 w-full">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <a href="/app.html" class="flex items-center space-x-2 text-gray-300 hover:text-white">
+                <i data-lucide="arrow-left"></i>
+                <span>Voltar</span>
+            </a>
+            <h1 class="text-xl font-semibold">Editar Perfil</h1>
+            <div class="w-20"></div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto p-6 mt-4">
+        <div id="loading-profile" class="text-center py-10">
+            <svg class="animate-spin h-10 w-10 text-pink-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <p class="text-gray-400 mt-4">Carregando perfil...</p>
+        </div>
+
+        <div id="profile-content" class="hidden max-w-2xl mx-auto bg-gray-800 rounded-2xl p-8 shadow-lg">
+            
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold mb-4 text-center">Minhas Fotos</h3>
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div class="relative group">
+                        <img id="main-photo-img" src="https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07LwqYdTyH.jpg" alt="Foto principal" class="w-full h-40 object-cover rounded-lg bg-gray-700">
+                        <label for="main-photo-input" class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center cursor-pointer"><i data-lucide="camera" class="w-8 h-8 text-white opacity-0 group-hover:opacity-100"></i></label>
+                        <input type="file" id="main-photo-input" class="file-input" accept="image/png, image/jpeg" data-photo-slot="photoURL">
+                        <span data-remove-slot="photoURL" class="remove-photo-btn hidden absolute top-2 right-2 cursor-pointer text-white/50 hover:text-white transition-colors"><i data-lucide="trash-2" class="w-6 h-6"></i></span>
+                    </div>
+                    <div class="relative group">
+                        <img id="photo-1-img" src="https://placehold.co/400x600/1f2937/6b7280?text=+" alt="Foto 1" class="w-full h-40 object-cover rounded-lg bg-gray-700">
+                        <label for="photo-1-input" class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center cursor-pointer"><i data-lucide="plus" class="w-8 h-8 text-white opacity-0 group-hover:opacity-100"></i></label>
+                        <input type="file" id="photo-1-input" class="file-input" accept="image/png, image/jpeg" data-photo-slot="photo1URL">
+                        <span data-remove-slot="photo1URL" class="remove-photo-btn hidden absolute top-2 right-2 cursor-pointer text-white/50 hover:text-white transition-colors"><i data-lucide="trash-2" class="w-6 h-6"></i></span>
+                    </div>
+                    <div class="relative group">
+                        <img id="photo-2-img" src="https://placehold.co/400x600/1f2937/6b7280?text=+" alt="Foto 2" class="w-full h-40 object-cover rounded-lg bg-gray-700">
+                        <label for="photo-2-input" class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center cursor-pointer"><i data-lucide="plus" class="w-8 h-8 text-white opacity-0 group-hover:opacity-100"></i></label>
+                        <input type="file" id="photo-2-input" class="file-input" accept="image/png, image/jpeg" data-photo-slot="photo2URL">
+                        <span data-remove-slot="photo2URL" class="remove-photo-btn hidden absolute top-2 right-2 cursor-pointer text-white/50 hover:text-white transition-colors"><i data-lucide="trash-2" class="w-6 h-6"></i></span>
+                    </div>
+                </div>
+            </div>
+
+            <form id="profile-form" class="space-y-6">
+                <div><label for="displayName" class="block text-sm font-medium text-gray-400 mb-1">Nome de Exibição</label><input type="text" id="displayName" style="text-transform: uppercase;" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3" maxlength="15">
+                
+                <div>
+                    <label for="cpf" class="block text-sm font-medium text-gray-400 mb-1">CPF</label>
+                    <input type="text" id="cpf" placeholder="Apenas números, sem pontos ou traços" pattern="\d{11}" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3">
+                    <p class="text-xs text-gray-500 mt-2">Necessário para a compra de mimos e saques via PIX.</p>
+                </div>
+                <div><label for="bio" class="block text-sm font-medium text-gray-400 mb-1">Bio</label><textarea id="bio" rows="3" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3" placeholder="Fale um pouco sobre você..." required></textarea></div>
+                <div><label for="idade" class="block text-sm font-medium text-gray-400 mb-1">Idade</label><input type="number" id="idade" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3" required></div>
+                <div>
+                <label for="sexo" class="block text-sm font-medium text-gray-400 mb-1">Eu me identifico como</label>
+                <select id="sexo" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3" required>
+                    <option value="">Selecione como você se identifica</option>
+                    <option value="Mulher">Mulher</option>
+                    <option value="Homem">Homem</option>
+                    <option value="Mulher bissexual">Mulher bissexual</option>
+                    <option value="Homem bissexual">Homem bissexual</option>
+                    <option value="Homem homossexual">Homem homossexual</option>
+                    <option value="Lésbica">Lésbica</option>
+                    <option value="Transgênero">Transgênero</option>
+                    <option value="Queer">Queer</option>
+                    <option value="Intersexo">Intersexo</option>
+                    <option value="Assexual">Assexual</option>             
+                </select>
+            </div>
+                <div><label for="estado" class="block text-sm font-medium text-gray-400 mb-1">Estado (UF)</label><select id="estado" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3" required><option value="">Selecione</option><option value="AC">Acre</option><option value="AL">Alagoas</option><option value="AP">Amapá</option><option value="AM">Amazonas</option><option value="BA">Bahia</option><option value="CE">Ceará</option><option value="DF">Distrito Federal</option><option value="ES">Espírito Santo</option><option value="GO">Goiás</option><option value="MA">Maranhão</option><option value="MT">Mato Grosso</option><option value="MS">Mato Grosso do Sul</option><option value="MG">Minas Gerais</option><option value="PA">Pará</option><option value="PB">Paraíba</option><option value="PR">Paraná</option><option value="PE">Pernambuco</option><option value="PI">Piauí</option><option value="RJ">Rio de Janeiro</option><option value="RN">Rio Grande do Norte</option><option value="RS">Rio Grande do Sul</option><option value="RO">Rondônia</option><option value="RR">Roraima</option><option value="SC">Santa Catarina</option><option value="SP">São Paulo</option><option value="SE">Sergipe</option><option value="TO">Tocantins</option></select></div>
+                <div><label for="cidade" class="block text-sm font-medium text-gray-400 mb-1">Cidade</label><select id="cidade" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3" disabled required><option value="">Selecione um estado</option></select></div>
+
+                <div class="pt-4">
+                    <button type="submit" id="save-btn" class="w-full bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 text-white font-bold py-2 px-6 rounded-lg">Salvar Alterações</button>
+                </div>
+            </form>
+
+            <div class="mt-4">
+                <button type="button" id="share-profile-btn" class="w-full bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 text-white font-bold py-3 px-6 rounded-lg flex items-center justify-center space-x-2 transition-colors">
+                    <i data-lucide="share-2" class="w-5 h-5"></i>
+                    <span>Compartilhar Meu Perfil</span>
+                </button>
+            </div>
+            <div class="mt-12 pt-6 border-t border-gray-700">
+                <button type="button" id="delete-account-btn" class="w-full bg-transparent hover:bg-red-900/50 text-red-500 font-semibold py-3 px-6 rounded-lg border border-red-800 hover:border-red-700 transition-colors">Excluir Minha Conta</button>
+            </div>
+        </div>
+    </main>
+
+    <div id="cropping-modal" class="fixed inset-0 bg-black bg-opacity-75 flex-col items-center justify-center z-[100] hidden">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-6 max-w-sm w-full mx-4 text-center">
+            <h2 class="text-2xl font-bold text-white mb-4">Ajuste sua Foto</h2>
+            <div id="croppie-container"></div>
+            <div class="flex justify-center space-x-4 mt-6">
+                <button id="cancel-crop-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg">Cancelar</button>
+                <button id="save-crop-btn" class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-6 rounded-lg">Salvar Foto</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="message-box" class="bg-gray-800"></div>
+
+   <script type="module">
+    import { auth, db, storage } from './firebase-config.js';
+    import { onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+
+    // A URL da sua função onRequest
+    const DELETE_USER_FUNCTION_URL = 'https://deleteuseraccount-h6gwywyvra-uc.a.run.app';
+    const DEFAULT_PHOTO_URL = 'https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07LwqYdTyH.jpg';
+
+    const loadingProfile = document.getElementById('loading-profile');
+    const profileContent = document.getElementById('profile-content');
+    const profileForm = document.getElementById('profile-form');
+    const messageBox = document.getElementById('message-box');
+    const deleteAccountBtn = document.getElementById('delete-account-btn');
+    const croppingModal = document.getElementById('cropping-modal');
+    const croppieContainer = document.getElementById('croppie-container');
+    const saveCropBtn = document.getElementById('save-crop-btn');
+    const cancelCropBtn = document.getElementById('cancel-crop-btn');
+    const estadoSelect = document.getElementById('estado');
+    const cidadeSelect = document.getElementById('cidade');
+    
+    let currentUserRef = null;
+    let currentUserId = null;
+    let croppieInstance = null;
+    let photoSlotToUpdate = null;
+    let estadosCidadesData = null;
+
+    const showMessage = (message, isError = false) => {
+        messageBox.textContent = message;
+        messageBox.style.backgroundColor = isError ? '#ef4444' : '#22c55e';
+        messageBox.classList.add('show');
+        setTimeout(() => { messageBox.classList.remove('show'); }, 4000);
+    };
+
+    function validaCPF(cpf) {
+        cpf = String(cpf).replace(/[^\d]/g, '');
+        if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) {
+            return false;
+        }
+        let soma = 0;
+        let resto;
+        for (let i = 1; i <= 9; i++) {
+            soma += parseInt(cpf.substring(i - 1, i)) * (11 - i);
+        }
+        resto = (soma * 10) % 11;
+        if (resto === 10 || resto === 11) {
+            resto = 0;
+        }
+        if (resto !== parseInt(cpf.substring(9, 10))) {
+            return false;
+        }
+        soma = 0;
+        for (let i = 1; i <= 10; i++) {
+            soma += parseInt(cpf.substring(i - 1, i)) * (12 - i);
+        }
+        resto = (soma * 10) % 11;
+        if (resto === 10 || resto === 11) {
+            resto = 0;
+        }
+        if (resto !== parseInt(cpf.substring(10, 11))) {
+            return false;
+        }
+        return true;
+    }
+
+    const populateProfileData = async (data) => {
+        document.getElementById('main-photo-img').src = data.photoURL || DEFAULT_PHOTO_URL;
+        document.getElementById('photo-1-img').src = data.photo1URL || 'https://placehold.co/400x600/1f2937/6b7280?text=+';
+        document.getElementById('photo-2-img').src = data.photo2URL || 'https://placehold.co/400x600/1f2937/6b7280?text=+';
+        document.getElementById('displayName').value = data.displayName || '';
+        document.getElementById('bio').value = data.bio || '';
+        document.getElementById('idade').value = data.idade || '';
+        document.getElementById('sexo').value = data.sexo || '';
+        document.getElementById('cpf').value = data.cpf || '';
+        
+        if (data.estado) {
+            estadoSelect.value = data.estado;
+            await updateCidades(data.estado, data.cidade);
+        } else {
+             cidadeSelect.innerHTML = '<option value="">Selecione um estado</option>';
+             cidadeSelect.disabled = true;
+        }
+
+        document.querySelectorAll('.remove-photo-btn').forEach(btn => {
+            const photoSlot = btn.dataset.removeSlot;
+            const imgUrl = data[photoSlot];
+            if (imgUrl && !imgUrl.includes('placehold.co')) {
+                btn.classList.remove('hidden');
+            } else {
+                btn.classList.add('hidden');
+            }
+        });
+    };
+
+    const handleProfileSave = async (e) => {
+        e.preventDefault();
+        const mainPhotoSrc = document.getElementById('main-photo-img').src;
+        if (!mainPhotoSrc || mainPhotoSrc.includes('t4.ftcdn.net') || mainPhotoSrc.includes('placehold.co')) {
+            showMessage('É obrigatório ter uma foto de perfil principal para salvar.', true);
+            return; 
+        }
+
+        const sexoValue = document.getElementById('sexo').value;
+        if (!sexoValue) {
+            showMessage('Por favor, selecione como você se identifica.', true);
+            return;
+        }
+        const saveBtn = document.getElementById('save-btn');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Salvando...';
+        
+        const cpfValue = document.getElementById('cpf').value.trim();
+        
+        if (!validaCPF(cpfValue)) {
+            showMessage('Por favor, insira um CPF válido.', true);
+            saveBtn.disabled = false; 
+            saveBtn.textContent = 'Salvar Alterações'; 
+            return;
+        }
+
+        const ageValue = parseInt(document.getElementById('idade').value);
+        if (isNaN(ageValue) || ageValue < 18) {
+            showMessage('A idade deve ser um número válido e no mínimo 18 anos.', true);
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Salvar Alterações';
+            return;
+        }
+
+        const formData = {
+            displayName: document.getElementById('displayName').value.toUpperCase().slice(0, 15),
+            bio: document.getElementById('bio').value,
+            idade: parseInt(document.getElementById('idade').value) || null,
+            sexo: document.getElementById('sexo').value,
+            cidade: document.getElementById('cidade').value,
+            estado: document.getElementById('estado').value,
+            cpf: cpfValue,
+            photoURL: document.getElementById('main-photo-img').src,
+            photo1URL: document.getElementById('photo-1-img').src.includes('placehold.co') ? '' : document.getElementById('photo-1-img').src,
+            photo2URL: document.getElementById('photo-2-img').src.includes('placehold.co') ? '' : document.getElementById('photo-2-img').src
+        };
+
+        try {
+            await updateDoc(currentUserRef, formData);
+            if (formData.displayName !== auth.currentUser.displayName) {
+                await updateProfile(auth.currentUser, { displayName: formData.displayName });
+            }
+            showMessage('Perfil salvo com sucesso!');
+        } catch (error) {
+            console.error("Erro ao salvar perfil:", error);
+            showMessage('Ocorreu um erro ao salvar o perfil.', true);
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Salvar Alterações';
+        }
+    };
+    
+    async function loadLocalidades() {
+        try {
+            const response = await fetch('/estados-cidades.json');
+            if (!response.ok) throw new Error('Falha na rede');
+            estadosCidadesData = await response.json();
+        } catch (error) {
+            console.error("Não foi possível carregar o arquivo de localidades.", error);
+            showMessage("Erro ao carregar lista de cidades.", true);
+        }
+    }
+
+    async function updateCidades(estadoSigla, cidadePreSelecionada = null) {
+        cidadeSelect.innerHTML = '<option value="">Carregando...</option>';
+        cidadeSelect.disabled = true;
+
+        if (estadoSigla && estadosCidadesData) {
+            const estado = estadosCidadesData.estados.find(e => e.sigla === estadoSigla);
+            if (estado) {
+                cidadeSelect.innerHTML = '<option value="">Selecione</option>';
+                estado.cidades.forEach(cidade => {
+                    const option = document.createElement('option');
+                    option.value = cidade;
+                    option.textContent = cidade;
+                    cidadeSelect.appendChild(option);
+                });
+                cidadeSelect.disabled = false;
+                if (cidadePreSelecionada) {
+                    cidadeSelect.value = cidadePreSelecionada;
+                }
+            }
+        } else {
+             cidadeSelect.innerHTML = '<option value="">Selecione um estado</option>';
+        }
+    }
+    
+    estadoSelect.addEventListener('change', () => {
+        updateCidades(estadoSelect.value);
+    });
+
+    const handlePhotoUpload = async (blob) => {
+        if (!blob || !photoSlotToUpdate) return;
+        saveCropBtn.disabled = true;
+        saveCropBtn.textContent = 'Enviando...';
+
+        let imgElementId;
+        if (photoSlotToUpdate === 'photoURL') {
+            imgElementId = 'main-photo-img';
+        } else {
+            imgElementId = photoSlotToUpdate.replace('URL', '-img').replace('photo', 'photo-');
+        }
+        const imgElement = document.getElementById(imgElementId);
+        
+        if (!imgElement) {
+            console.error("Elemento <img> não encontrado com o ID:", imgElementId);
+            showMessage('Ocorreu um erro interno ao tentar atualizar a imagem.', true);
+            croppingModal.style.display = 'none';
+            if (croppieInstance) { croppieInstance.destroy(); croppieInstance = null; }
+            saveCropBtn.disabled = false;
+            saveCropBtn.textContent = 'Salvar Foto';
+            return;
+        }
+
+        imgElement.style.opacity = '0.5';
+        try {
+            const storageRef = ref(storage, `profile-pictures/${currentUserId}/${photoSlotToUpdate}_${Date.now()}.webp`);
+            const snapshot = await uploadBytes(storageRef, blob, { contentType: 'image/webp' });
+            const downloadURL = await getDownloadURL(snapshot.ref);
+            await updateDoc(currentUserRef, { [photoSlotToUpdate]: downloadURL });
+            imgElement.src = downloadURL;
+            showMessage('Foto enviada com sucesso!');
+            const removeBtn = document.querySelector(`span[data-remove-slot='${photoSlotToUpdate}']`);
+            if (removeBtn) removeBtn.classList.remove('hidden');
+        } catch (error) {
+            console.error("Erro ao enviar foto:", error);
+            showMessage('Ocorreu um erro ao enviar a foto.', true);
+        } finally {
+            croppingModal.style.display = 'none';
+            if (croppieInstance) { croppieInstance.destroy(); croppieInstance = null; }
+            imgElement.style.opacity = '1';
+            saveCropBtn.disabled = false;
+            saveCropBtn.textContent = 'Salvar Foto';
+        }
+    };
+    
+    const handlePhotoRemove = async (photoSlot) => {
+        const userDoc = await getDoc(currentUserRef);
+        const userData = userDoc.data();
+
+        const existingPhotos = ['photoURL', 'photo1URL', 'photo2URL'].filter(slot => userData[slot] && !userData[slot].includes('placehold.co'));
+        if (existingPhotos.length <= 1 && existingPhotos.includes(photoSlot)) {
+            showMessage('Para alterar sua última foto, basta selecionar uma nova.', false);
+            document.querySelector(`input[data-photo-slot='${photoSlot}']`).click();
+            return;
+        }
+        
+        if (!confirm('Tem certeza que deseja remover esta foto?')) return;
+        
+        try {
+            await updateDoc(currentUserRef, { [photoSlot]: "" });
+            const imgElement = document.getElementById(photoSlot.replace('URL', '-img').replace('photo', 'photo-'));
+            imgElement.src = photoSlot === 'photoURL' ? DEFAULT_PHOTO_URL : 'https://placehold.co/400x600/1f2937/6b7280?text=+';
+            const removeBtn = document.querySelector(`span[data-remove-slot='${photoSlot}']`);
+            if (removeBtn) removeBtn.classList.add('hidden');
+            showMessage('Foto removida com sucesso!');
+        } catch(error) {
+            showMessage('Erro ao remover a foto.', true);
+            console.error("Erro ao remover foto:", error);
+        }
+    };
+
+    const setupCroppie = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        photoSlotToUpdate = event.target.dataset.photoSlot;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            if (croppieInstance) { croppieInstance.destroy(); }
+            croppieContainer.innerHTML = '';
+            croppingModal.style.display = 'flex';
+            croppieInstance = new Croppie(croppieContainer, {
+                viewport: { width: 200, height: 200, type: 'square' },
+                boundary: { width: 250, height: 250 },
+                enableExif: true
+            });
+            croppieInstance.bind({ url: e.target.result });
+        };
+        reader.readAsDataURL(file);
+        event.target.value = '';
+    };
+    
+    async function handleDeleteAccount(force = false) {
+        const confirmationMessage = force ? 
+            "Você confirmou que deseja perder seu saldo. Tem certeza ABSOLUTA que deseja excluir sua conta? Esta ação é irreversível." : 
+            "Você tem CERTEZA que deseja excluir sua conta? Esta ação é irreversível.";
+        
+        if (!confirm(confirmationMessage)) return;
+
+        deleteAccountBtn.disabled = true;
+        deleteAccountBtn.textContent = 'Excluindo...';
+        
+        try {
+            const user = auth.currentUser;
+            if (!user) throw new Error("Usuário não autenticado.");
+            
+            const idToken = await user.getIdToken(true);
+            const requestBody = { data: { forceDelete: force } };
+
+            const response = await fetch(DELETE_USER_FUNCTION_URL, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+
+            const result = await response.json();
+            
+            if (response.ok && result.data.success) {
+                showMessage("Sua conta foi excluída com sucesso. Você será redirecionado.");
+                await signOut(auth);
+                setTimeout(() => { window.location.href = '/index.html'; }, 3000);
+            } else {
+                const errorData = result.data || result.error;
+                const errorCode = errorData.code;
+                const errorMessage = errorData.message;
+
+                if (errorCode === 'MUST_WITHDRAW_FIRST') {
+                    alert(errorMessage); 
+                } else if (errorCode === 'HAS_BALANCE_BELOW_MINIMUM') {
+                    if (confirm(errorMessage)) {
+                        await handleDeleteAccount(true); 
+                    }
+                } else {
+                    throw new Error(errorMessage || 'Falha ao excluir a conta.');
+                }
+            }
+        } catch (error) {
+            console.error("Erro ao excluir conta:", error);
+            showMessage(error.message, true);
+        } finally {
+            if (!auth.currentUser) return;
+            deleteAccountBtn.disabled = false;
+            deleteAccountBtn.textContent = 'Excluir Minha Conta';
+        }
+    }
+    
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUserId = user.uid;
+            currentUserRef = doc(db, "users", user.uid);
+            await loadLocalidades();
+
+            try {
+                const userDoc = await getDoc(currentUserRef);
+                if (userDoc.exists()) {
+                    await populateProfileData(userDoc.data());
+                    
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('msg') === 'complete-profile') {
+                        showMessage('Complete seu perfil para continuar navegando.', true);
+                    }
+
+                    loadingProfile.style.display = 'none';
+                    profileContent.classList.remove('hidden');
+
+                    profileForm.addEventListener('submit', handleProfileSave);      
+                    
+                    const shareProfileBtn = document.getElementById('share-profile-btn');
+                    shareProfileBtn.addEventListener('click', async () => {
+                        const profileUrl = `https://www.mimoly.com.br/profile_details.html?userId=${currentUserId}`;
+
+                        if (navigator.share) {
+                            try {
+                                await navigator.share({
+                                    title: `Veja meu perfil no Mimoly`,
+                                    text: `Oi! Confira meu perfil no Mimoly, uma nova plataforma de conexões.`,
+                                    url: profileUrl,
+                                });
+                            } catch (error) {
+                                console.log('Compartilhamento cancelado ou falhou', error);
+                            }
+                        } else {
+                            try {
+                                await navigator.clipboard.writeText(profileUrl);
+                                showMessage('Link do perfil copiado para a área de transferência!');
+                            } catch (err) {
+                                showMessage('Não foi possível copiar o link.', true);
+                            }
+                        }
+                    });
+                    
+                    document.querySelectorAll('.file-input').forEach(input => {
+                        input.addEventListener('change', setupCroppie);
+                    });
+
+                    document.querySelectorAll('.remove-photo-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            handlePhotoRemove(btn.dataset.removeSlot);
+                        });
+                    });
+
+                    saveCropBtn.addEventListener('click', () => {
+                        croppieInstance.result({
+                            type: 'blob', size: { width: 400, height: 400 },
+                            format: 'webp', quality: 0.8,
+                            circle: false 
+                        }).then(handlePhotoUpload);
+                    });
+
+                    cancelCropBtn.addEventListener('click', () => {
+                        croppingModal.style.display = 'none';
+                        if (croppieInstance) { croppieInstance.destroy(); croppieInstance = null; }
+                    });
+                    
+                    deleteAccountBtn.addEventListener('click', () => handleDeleteAccount(false));
+
+                } else { window.location.href = '/app.html'; }
+            } catch (error) {
+                console.error("Erro ao buscar dados do perfil:", error);
+                loadingProfile.innerHTML = '<p class="text-red-400">Não foi possível carregar o perfil.</p>';
+            }
+        } else { window.location.href = '/index.html'; }
+    });
+    
+    lucide.createIcons();
+</script>
+<div id="terms-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+    </div>
+
+</body>
+</html>

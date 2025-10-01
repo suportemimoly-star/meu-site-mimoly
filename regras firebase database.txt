@@ -1,0 +1,92 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Função para validar os campos de um perfil que podem ser editados pelo utilizador
+    function isProfileComplete(data) {
+ 		return data.displayName is string && data.displayName.size() > 0
+    && data.cpf is string && data.cpf.size() == 11 // Assumindo CPF de 11 dígitos
+    && data.bio is string && data.bio.size() > 0
+    && data.idade is int && data.idade >= 18 // Idade mínima
+    && data.sexo is string && data.sexo.size() > 0
+    && data.cidade is string && data.cidade.size() > 0
+    && data.estado is string && data.estado.size() > 0
+    // Apenas a photoURL principal é obrigatória para o perfil ser "completo"
+    && data.photoURL is string && data.photoURL.size() > 0;
+}
+  // Regras para a coleção 'users'
+  // Substitua todo o seu bloco match /users/{userId} por este
+	match /users/{userId} {
+  allow read: if request.auth.uid == userId || (request.auth.uid != null && resource.data.profileComplete == true);  
+  // A criação do documento é permitida, mas com valores iniciais seguros e controlados
+  allow create: if request.auth.uid == userId
+                  && request.resource.data.saldoMimos == 0
+                  && request.resource.data.saldoReais == 0
+                  && request.resource.data.curtidas == 0
+                  && request.resource.data.profileComplete == false;
+
+  // A atualização é permitida apenas para campos não financeiros e de perfil 
+	allow update: if request.auth.uid == userId	
+  // REGRA 1: Garante que o valor dos campos do servidor não mudou
+  && request.resource.data.saldoMimos == resource.data.saldoMimos
+  && request.resource.data.saldoReais == resource.data.saldoReais
+  && request.resource.data.curtidas == resource.data.curtidas
+  
+  && (
+    // Opção A: Salvar um perfil de texto completo (o que já tínhamos)
+    isProfileComplete(request.resource.data)
+    ||
+    // Opção B: Atualizar um ou mais campos de FOTOS, e NENHUM campo de texto
+    (
+      request.writeFields.hasAny(['photoURL', 'photo1URL', 'photo2URL']) &&
+      !request.writeFields.hasAny(['displayName', 'cpf', 'bio', 'idade', 'sexo', 'cidade', 'estado'])
+    )
+    ||
+    // Opção C: Atualizar apenas o campo profileComplete para TRUE, após preenchimento
+        (
+          request.writeFields.size() == 1 && // Apenas um campo está sendo atualizado
+          request.writeFields.has('profileComplete') && // E é o profileComplete
+          request.resource.data.profileComplete == true // E está sendo definido como true
+        )
+  );
+
+  // A exclusão direta pelo cliente é proibida para forçar o uso da Cloud Function
+  allow delete: if false;
+
+  // Apenas o dono do perfil pode ver quem o curtiu
+  match /likesReceived/{likerId} {
+    allow read: if request.auth.uid == userId;
+    allow write: if false;
+  }
+
+  // A escrita direta de 'likes enviados' é proibida
+  match /likesSent/{likedUserId} {
+    allow read: if request.auth.uid == userId;
+    allow write: if false;
+  }
+}
+    // Regras para a coleção 'chats' 
+    match /chats/{chatId} {
+      allow read, write: if request.auth.uid in resource.data.participants;
+
+      match /messages/{messageId} {
+        allow read: if request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+        allow create: if request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants
+                && request.resource.data.senderId == request.auth.uid
+                // GARANTE TIPO: O campo 'text' deve ser uma string
+                && request.resource.data.text is string 
+                // GARANTE TAMANHO: A mensagem não pode ser vazia
+                && request.resource.data.text.size() > 0 
+                // GARANTE ECONOMIA: Limita o tamanho máximo da mensagem a 500 caracteres
+                && request.resource.data.text.size() <= 500; 
+        allow update, delete: if false;
+      }
+    }
+
+    // Regras para a subcoleção de transações
+    match /users/{userId}/walletTransactions/{transactionId} {
+      allow read: if request.auth.uid == userId;
+      allow create, update, delete: if false; // Apenas o backend pode criar transações
+    }
+  }
+}

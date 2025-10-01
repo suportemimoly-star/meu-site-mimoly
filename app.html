@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mimoly - App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        #message-box {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: bottom 0.5s ease-in-out;
+            z-index: 100;
+        }
+        #message-box.show {
+            bottom: 20px;
+        }
+        #filter-modal {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 60;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        #filter-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        #filter-modal > div {
+            transform: translateY(20px);
+            transition: transform 0.3s ease-in-out;
+        }
+        #filter-modal.show > div {
+            transform: translateY(0);
+        }
+        select:disabled {
+            background-color: #4b5563;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .filter-checkbox-group label {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            background-color: #374151;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 2px solid transparent;
+        }
+        .filter-checkbox-group input[type="checkbox"] {
+            display: none;
+        }
+        .filter-checkbox-group input[type="checkbox"]:checked + span {
+            color: #ec4899; 
+            font-weight: 600;
+        }
+         .filter-checkbox-group label:has(input:checked) {
+            border-color: #ec4899;
+        }
+        .filter-checkbox-group label:hover {
+            background-color: #4b5563;
+        }
+        #load-more-btn:disabled {
+            background-color: #4b5563;
+            cursor: wait;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200">
+
+    <div id="main-app-content">
+        <header class="bg-black backdrop-blur-sm shadow-lg sticky top-0 z-50 w-full"></header>
+
+        <main class="container mx-auto px-6 py-8 min-h-screen">
+             <div class="flex justify-between items-center mb-8">
+                <h1 class="text-2xl sm:text-3xl font-semibold text-white">Pessoas para você</h1>
+            </div>
+            <div id="users-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                </div>
+            
+            <div id="load-more-container" class="text-center mt-10 py-4 hidden">
+                <button id="load-more-btn" class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 px-8 rounded-full transition-colors duration-300">
+                    Carregar Mais
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <div id="mimo-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-8 max-w-sm mx-4 text-center">
+            <h2 id="mimo-modal-title" class="text-2xl font-bold text-white mb-4"></h2>
+            <p id="mimo-modal-text" class="text-gray-400 mb-6"></p>
+            <div class="flex justify-center space-x-4">
+                <button id="cancel-mimo-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-full">Cancelar</button>
+                <button id="confirm-mimo-btn" class="bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 text-white font-bold py-2 px-6 rounded-full"></button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="filter-modal" class="hidden">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-8 max-w-md w-full mx-4 relative">
+            <button id="close-filter-modal-btn" class="absolute top-3 right-3 text-gray-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+            <h2 class="text-2xl font-bold text-white mb-6 text-center">Configurar Filtros</h2>
+            <div class="space-y-6">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="filter-idade-min" class="block text-sm font-medium text-gray-400 mb-1">Idade Mínima</label>
+                        <input type="number" id="filter-idade-min" placeholder="18" min="18" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white">
+                    </div>
+                    <div>
+                        <label for="filter-idade-max" class="block text-sm font-medium text-gray-400 mb-1">Idade Máxima</label>
+                        <input type="number" id="filter-idade-max" placeholder="99" min="18" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Buscar por</label>
+                    <div id="filter-sexo-group" class="filter-checkbox-group grid grid-cols-2 gap-2">
+                        <label><input type="checkbox" name="sexo" value="Mulher"> <span class="w-full text-center">Mulher</span></label>
+                        <label><input type="checkbox" name="sexo" value="Homem"> <span class="w-full text-center">Homem</span></label>
+                        <label><input type="checkbox" name="sexo" value="Mulher bissexual"> <span class="w-full text-center">Mulher bissexual</span></label>
+                        <label><input type="checkbox" name="sexo" value="Homem bissexual"> <span class="w-full text-center">Homem bissexual</span></label>
+                        <label><input type="checkbox" name="sexo" value="Homem homossexual"> <span class="w-full text-center">Homem homossexual</span></label>
+                        <label><input type="checkbox" name="sexo" value="Lésbica"> <span class="w-full text-center">Lésbica</span></label>
+                        <label><input type="checkbox" name="sexo" value="Transgênero"> <span class="w-full text-center">Transgênero</span></label>
+                        <label><input type="checkbox" name="sexo" value="Queer"> <span class="w-full text-center">Queer</span></label>
+                        <label><input type="checkbox" name="sexo" value="Intersexo"> <span class="w-full text-center">Intersexo</span></label>
+                        <label><input type="checkbox" name="sexo" value="Assexual"> <span class="w-full text-center">Assexual</span></label>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="filter-estado" class="block text-sm font-medium text-gray-400 mb-1">Estado</label>
+                        <select id="filter-estado" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white">
+                            <option value="">Todos</option>
+                            <option value="AC">Acre</option><option value="AL">Alagoas</option><option value="AP">Amapá</option><option value="AM">Amazonas</option><option value="BA">Bahia</option><option value="CE">Ceará</option><option value="DF">Distrito Federal</option><option value="ES">Espírito Santo</option><option value="GO">Goiás</option><option value="MA">Maranhão</option><option value="MT">Mato Grosso</option><option value="MS">Mato Grosso do Sul</option><option value="MG">Minas Gerais</option><option value="PA">Pará</option><option value="PB">Paraíba</option><option value="PR">Paraná</option><option value="PE">Pernambuco</option><option value="PI">Piauí</option><option value="RJ">Rio de Janeiro</option><option value="RN">Rio Grande do Norte</option><option value="RS">Rio Grande do Sul</option><option value="RO">Rondônia</option><option value="RR">Roraima</option><option value="SC">Santa Catarina</option><option value="SP">São Paulo</option><option value="SE">Sergipe</option><option value="TO">Tocantins</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="filter-cidade" class="block text-sm font-medium text-gray-400 mb-1">Cidade</label>
+                        <select id="filter-cidade" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white" disabled>
+                            <option value="">Selecione um estado</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end space-x-3">
+                <button id="clear-filters-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-full">Limpar</button>
+                <button id="cancel-filters-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-full">Cancelar</button>
+                <button id="apply-filters-btn" class="bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 text-white font-bold py-2 px-4 rounded-full">Aplicar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="message-box" class="bg-gray-800"></div>
+
+    <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { callInitiateChatSafely } from './auth.js';
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { collection, query, getDocs, doc, getDoc, limit, where, orderBy, startAfter } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { loadHeader } from './header-loader.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const usersGrid = document.getElementById('users-grid');
+        const mimoModal = document.getElementById('mimo-modal');
+        const mimoModalTitle = document.getElementById('mimo-modal-title');
+        const mimoModalText = document.getElementById('mimo-modal-text');
+        const confirmMimoBtn = document.getElementById('confirm-mimo-btn');
+        const cancelMimoBtn = document.getElementById('cancel-mimo-btn');
+        const messageBox = document.getElementById('message-box');
+        const filterModal = document.getElementById('filter-modal');
+        const applyFiltersBtn = document.getElementById('apply-filters-btn');
+        const cancelFiltersBtn = document.getElementById('cancel-filters-btn');
+        const closeFilterModalBtn = document.getElementById('close-filter-modal-btn');
+        const filterIdadeMinInput = document.getElementById('filter-idade-min');
+        const filterIdadeMaxInput = document.getElementById('filter-idade-max');
+        const filterEstadoSelect = document.getElementById('filter-estado');
+        const filterCidadeSelect = document.getElementById('filter-cidade');
+        const clearFiltersBtn = document.getElementById('clear-filters-btn');
+        const loadMoreContainer = document.getElementById('load-more-container');
+        const loadMoreBtn = document.getElementById('load-more-btn');
+
+        const functions = getFunctions();
+        const toggleLike = httpsCallable(functions, 'toggleLike');
+
+        let currentUserData = null;
+        let targetUserForMimo = null;
+        let estadosCidadesData = null;
+        let lastVisibleDoc = null;
+        let isLoading = false;
+        let currentFilters = {};
+        const USERS_PER_PAGE = 12;
+
+        async function loadLocalidades() {
+            try {
+                const response = await fetch('/estados-cidades.json');
+                estadosCidadesData = await response.json();
+            } catch (error) {
+                console.error("Não foi possível carregar o arquivo de localidades.", error);
+                showMessage("Erro ao carregar lista de cidades.", true);
+            }
+        }
+
+        filterEstadoSelect.addEventListener('change', () => {
+            const estadoSigla = filterEstadoSelect.value;
+            filterCidadeSelect.innerHTML = '<option value="">Selecione um estado</option>';
+            filterCidadeSelect.disabled = true;
+
+            if (estadoSigla && estadosCidadesData) {
+                const estado = estadosCidadesData.estados.find(e => e.sigla === estadoSigla);
+                if (estado) {
+                    filterCidadeSelect.innerHTML = '<option value="">Qualquer</option>';
+                    estado.cidades.forEach(cidade => {
+                        const option = document.createElement('option');
+                        option.value = cidade;
+                        option.textContent = cidade;
+                        filterCidadeSelect.appendChild(option);
+                    });
+                    filterCidadeSelect.disabled = false;
+                }
+            }
+        });
+
+        const showMessage = (message, isError = false) => {
+            messageBox.textContent = message;
+            messageBox.style.backgroundColor = isError ? '#ef4444' : '#22c55e';
+            messageBox.classList.add('show');
+            setTimeout(() => { messageBox.classList.remove('show'); }, 4000);
+        };
+
+        const openFilterModal = () => {
+            filterModal.classList.remove('hidden');
+            setTimeout(() => filterModal.classList.add('show'), 10);
+        };
+        const closeFilterModal = () => {
+            filterModal.classList.remove('show');
+            setTimeout(() => filterModal.classList.add('hidden'), 300);
+        };
+
+        const clearFilters = () => {
+            document.querySelectorAll('#filter-sexo-group input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            filterIdadeMinInput.value = '';
+            filterIdadeMaxInput.value = '';
+            filterEstadoSelect.value = '';
+            filterCidadeSelect.innerHTML = '<option value="">Selecione um estado</option>';
+            filterCidadeSelect.disabled = true;
+            filterCidadeSelect.value = '';
+        };
+
+        const loadUsers = async (currentUser, startAfterDoc = null) => {
+            if (isLoading) return;
+            isLoading = true;
+            
+            if (!startAfterDoc) {
+                 usersGrid.innerHTML = `<div id="loading-spinner" class="col-span-full text-center py-10"><svg class="animate-spin h-10 w-10 text-pink-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p class="text-gray-400 mt-4">Buscando pessoas...</p></div>`;
+            } else {
+                loadMoreBtn.textContent = 'Carregando...';
+                loadMoreBtn.disabled = true;
+            }
+
+            try {
+                // --- MUDANÇA CRÍTICA AQUI ---
+                // Adicionamos a verificação 'profileComplete' para alinhar com as regras de segurança
+                let constraints = [
+                    where("profileComplete", "==", true), // Garante que só buscamos perfis completos
+                    where("uid", "!=", currentUser.uid)      // Continua excluindo o próprio usuário
+                ];
+                
+                if (currentFilters.sexos && currentFilters.sexos.length > 0) constraints.push(where("sexo", "in", currentFilters.sexos));
+                if (currentFilters.cidade) constraints.push(where("cidade", "==", currentFilters.cidade));
+                if (currentFilters.estado) constraints.push(where("estado", "==", currentFilters.estado));
+
+                constraints.push(orderBy("lastLogin", "desc"), orderBy("uid"));
+                if (startAfterDoc) {
+                    constraints.push(startAfter(startAfterDoc));
+                }
+                constraints.push(limit(USERS_PER_PAGE));
+
+                const q = query(collection(db, "users"), ...constraints);
+                const querySnapshot = await getDocs(q);
+
+                let userDocs = querySnapshot.docs;
+                if (currentFilters.idadeMin || currentFilters.idadeMax) {
+                    const minAge = currentFilters.idadeMin ? parseInt(currentFilters.idadeMin) : 18;
+                    const maxAge = currentFilters.idadeMax ? parseInt(currentFilters.idadeMax) : 99;
+                    userDocs = userDocs.filter(doc => {
+                        const age = doc.data().idade;
+                        return age && age >= minAge && age <= maxAge;
+                    });
+                }
+
+                if (!startAfterDoc) {
+                    usersGrid.innerHTML = '';
+                }
+
+                if (userDocs.length === 0 && usersGrid.innerHTML === '') {
+                    usersGrid.innerHTML = '<p class="col-span-full text-center text-gray-500">Nenhum usuário encontrado com esses filtros.</p>';
+                    loadMoreContainer.classList.add('hidden');
+                    isLoading = false;
+                    return;
+                }
+
+                const perfisCurtidos = currentUserData.perfisCurtidos || [];
+
+                const usersHTML = userDocs.map(doc => {
+                    const userData = doc.data();
+                    const isLiked = perfisCurtidos.includes(userData.uid);
+                    return `
+                    <div class="relative group p-0.5 rounded-xl bg-gradient-to-br from-white/20 to-white/0 hover:from-pink-500 hover:to-purple-600 transition-all duration-300">
+                        <div class="relative rounded-lg overflow-hidden">
+                            <a href="/profile_details.html?userId=${userData.uid}">
+                                <img src="${userData.photoURL || 'https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07LwqYdTyH.jpg'}" alt="${userData.displayName}" class="w-full h-72 sm:h-96 object-cover transition-transform duration-300 group-hover:scale-110">
+                            </a>
+                            <div class="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent"></div>
+                            <div class="absolute inset-x-0 bottom-0 p-4">
+                                <div class="flex flex-col">
+                                    <a href="/profile_details.html?userId=${userData.uid}" class="hover:underline">
+                                        <h2 class="text-xl font-semibold text-white truncate">${userData.displayName}, ${userData.idade || ''}</h2>
+                                    </a>
+                                    <p class="text-gray-200 text-sm mb-4 truncate">${userData.cidade ? `${userData.cidade}` : ''}${userData.estado ? `, ${userData.estado}` : ''}</p>
+                                </div>
+                                <div class="flex justify-between items-center mt-auto">
+                                    <button data-user-id="${userData.uid}" data-user-name="${userData.displayName}" class="mimo-btn bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 text-white font-bold py-2 px-4 rounded-full transition-all duration-300 hover:shadow-lg hover:shadow-pink-500/50 flex items-center space-x-2">
+                                        <i data-lucide="message-circle" class="w-5 h-5"></i>
+                                        <span>Chat</span>
+                                    </button>
+                                    <div class="flex items-center space-x-2">
+                                        <button data-user-id="${userData.uid}" class="like-btn ${isLiked ? 'text-orange-500' : 'text-gray-400'} hover:text-orange-400 transition-colors duration-300">
+                                            <i data-lucide="heart" class="fill-current"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('');
+                
+                usersGrid.insertAdjacentHTML('beforeend', usersHTML);
+
+                lastVisibleDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+                
+                if (querySnapshot.docs.length < USERS_PER_PAGE) {
+                    loadMoreContainer.classList.add('hidden');
+                } else {
+                    loadMoreContainer.classList.remove('hidden');
+                }
+
+                lucide.createIcons();
+            } catch (error) {
+                console.error("Erro ao carregar usuários:", error);
+                usersGrid.innerHTML = `<p class="col-span-full text-center text-red-400">Ocorreu um erro ao buscar usuários.</p>`;
+            } finally {
+                isLoading = false;
+                loadMoreBtn.textContent = 'Carregar Mais';
+                loadMoreBtn.disabled = false;
+            }
+        };
+
+        const handleLikeClick = async (likeBtn, targetUserId) => {
+            if (likeBtn.disabled) return;
+            likeBtn.disabled = true;
+
+            likeBtn.classList.toggle('text-orange-500');
+            likeBtn.classList.toggle('text-gray-400');
+
+            try {
+                await toggleLike({ targetUserId: targetUserId });
+            } catch (error) {
+                console.error("Erro ao curtir via function:", error);
+                showMessage("Ocorreu um erro ao processar a curtida.", true);
+                likeBtn.classList.toggle('text-orange-500');
+                likeBtn.classList.toggle('text-gray-400');
+            } finally {
+                likeBtn.disabled = false;
+            }
+        };
+        const setupEventListeners = (currentUser) => {
+            usersGrid.addEventListener('click', async (e) => {
+                const mimoBtn = e.target.closest('.mimo-btn');
+                const likeBtn = e.target.closest('.like-btn');
+
+                if (mimoBtn) {
+                    const targetUserId = mimoBtn.dataset.userId;
+                    const targetUserName = mimoBtn.dataset.userName;
+                    const chatId = [currentUser.uid, targetUserId].sort().join('_');
+                    const chatRef = doc(db, "chats", chatId);
+
+                    try {
+                        const chatDoc = await getDoc(chatRef);
+                        if (chatDoc.exists()) {
+                            const chatData = chatDoc.data();
+                            const expiresAt = chatData.accessExpiresAt?.toDate();
+                            if (expiresAt && expiresAt > new Date()) {
+                                window.location.href = `/chat.html?chatId=${chatId}`;
+                                return;
+                            }
+                        }
+                    } catch (error) {
+                        console.warn("Não foi possível verificar o chat existente (isto é esperado se o chat for novo):", error.message);
+                    }
+                    
+                    try {
+                        targetUserForMimo = { id: targetUserId, name: targetUserName };
+                        const lastFreeDate = currentUserData.lastFreeChatDate?.toDate();
+                        const now = new Date();
+                        const oneWeekInMillis = 7 * 24 * 60 * 60 * 1000;
+                        let hasFreeChat = !lastFreeDate || (now.getTime() - lastFreeDate.getTime()) >= oneWeekInMillis;
+
+                        if (!hasFreeChat && (!currentUserData.saldoMimos || currentUserData.saldoMimos < 1)) {
+                            showMessage("Você não tem Mimos. Compre na loja para conversar!", true);
+                            setTimeout(() => {
+                                window.location.href = '/loja.html';
+                            }, 2500);
+                            return;
+                        }
+
+                        if (hasFreeChat) {
+                            mimoModalTitle.textContent = "Um Mimo para Você!";
+                            mimoModalText.innerHTML = "Este é o seu chat grátis da semana! Essa conversa <b>não terá desconto</b> no seu saldo de mimos.";
+                            confirmMimoBtn.textContent = "Iniciar chat";
+                        } else {
+                            mimoModalTitle.textContent = "Enviar Pedido de Conversa";
+                            mimoModalText.innerHTML = `Deseja enviar um pedido de conversa para <span class="font-bold text-white">${targetUserForMimo.name}</span>? Um Mimo será descontado <strong>apenas se a pessoa responder</strong>.`;
+                            confirmMimoBtn.textContent = "Confirmar";
+                        }
+                        mimoModal.classList.remove('hidden');
+                    } catch (error) {
+                        console.error("Ocorreu um erro inesperado ao preparar o chat:", error);
+                        showMessage("Ocorreu um erro inesperado. Tente novamente.", true);
+                    }
+                }
+
+                if (likeBtn) {
+                    handleLikeClick(likeBtn, likeBtn.dataset.userId);
+                }
+            });
+
+            confirmMimoBtn.addEventListener('click', async () => {
+                if (!targetUserForMimo) return;
+                confirmMimoBtn.disabled = true;
+                const originalText = confirmMimoBtn.textContent;
+                confirmMimoBtn.textContent = 'Enviando...';
+                try {
+                    const result = await callInitiateChatSafely(targetUserForMimo.id);
+                    if (result && result.success) {
+                        showMessage("Pedido de conversa enviado! Abrindo o chat...");
+                        setTimeout(() => {
+                            window.location.href = `/chat.html?chatId=${result.chatId}`;
+                        }, 1500);
+                    } else {
+                        throw new Error("A função de iniciar o chat não retornou uma resposta válida.");
+                    }
+                } catch (error) {
+                    showMessage(error.message, true);
+                } finally {
+                    confirmMimoBtn.disabled = false;
+                    confirmMimoBtn.textContent = originalText;
+                    mimoModal.classList.add('hidden');
+                    targetUserForMimo = null;
+                }
+            });
+
+            cancelMimoBtn.addEventListener('click', () => {
+                mimoModal.classList.add('hidden');
+                targetUserForMimo = null;
+            });
+
+            document.addEventListener('click', (e) => {
+                if (e.target.closest('#open-filter-modal-btn')) {
+                    openFilterModal();
+                }
+            });
+            
+            loadMoreBtn.addEventListener('click', () => {
+                if (!isLoading) {
+                    loadUsers(auth.currentUser, lastVisibleDoc);
+                }
+            });
+
+            applyFiltersBtn.addEventListener('click', () => {
+                const selectedSexos = Array.from(document.querySelectorAll('#filter-sexo-group input[type="checkbox"]:checked'))
+                                         .map(cb => cb.value);
+                currentFilters = {
+                    sexos: selectedSexos,
+                    idadeMin: filterIdadeMinInput.value,
+                    idadeMax: filterIdadeMaxInput.value,
+                    cidade: filterCidadeSelect.value,
+                    estado: filterEstadoSelect.value,
+                };
+                closeFilterModal();
+                lastVisibleDoc = null; 
+                loadUsers(auth.currentUser); 
+            });
+
+            cancelFiltersBtn.addEventListener('click', closeFilterModal);
+            closeFilterModalBtn.addEventListener('click', closeFilterModal);
+            
+            clearFiltersBtn.addEventListener('click', () => {
+                clearFilters();
+                closeFilterModal();
+                currentFilters = {}; 
+                lastVisibleDoc = null; 
+                loadUsers(auth.currentUser); 
+            });
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                await loadHeader();
+                await loadLocalidades();
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+
+                if (userDoc.exists()) {
+                    currentUserData = userDoc.data();
+                    
+                    if (!currentUserData.profileComplete) {
+                        window.location.href = '/perfil.html?msg=complete-profile';
+                        return;
+                    }
+                    
+                    setupEventListeners(user);
+                    await loadUsers(user);
+
+                } else {
+                    // Se o usuário está autenticado mas não tem documento no Firestore,
+                    // a lógica no login.html deveria ter cuidado disso.
+                    // Como um fallback, podemos redirecionar para o login para forçar a criação.
+                    window.location.href = '/login.html';
+                }
+            } else {
+                window.location.href = '/index.html';
+            }
+        });
+    });
+</script>
+
+    <div id="terms-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+        </div>
+</body>
+</html>

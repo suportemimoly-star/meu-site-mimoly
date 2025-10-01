@@ -1,0 +1,10 @@
+{
+  "projects": {
+    "default": "sitemimoly",
+    "mimoly": "sitemimoly",
+    "dev": "mimoly-dev",
+    "prod": "sitemimoly"
+  },
+  "targets": {},
+  "etags": {}
+}

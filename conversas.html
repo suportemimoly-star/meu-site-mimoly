@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mimoly - Meus Chats</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+
+    <header class="bg-black backdrop-blur-sm shadow-lg sticky top-0 z-50 w-full"></header>
+
+    <main class="container mx-auto p-6 mt-4">
+        <h1 class="text-3xl font-bold text-white mb-8 text-center">Meus Chats</h1>
+        
+        <div id="conversations-list" class="space-y-4 max-w-2xl mx-auto">
+        </div>
+
+        <div id="loading-spinner" class="text-center py-10">
+            <svg class="animate-spin h-10 w-10 text-pink-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-gray-400 mt-4">Carregando suas conversas...</p>
+        </div>
+
+         <div id="no-conversations" class="hidden text-center py-10">
+            <i data-lucide="message-square-off" class="w-16 h-16 text-gray-500 mx-auto mb-4"></i>
+            <h2 class="text-2xl font-bold text-white">Nenhuma conversa encontrada</h2>
+            <p class="text-gray-400 mt-2">Envie um "Mimo" para alguém para começar a conversar!</p>
+            <a href="/app.html" class="mt-6 inline-block bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">Descobrir Pessoas</a>
+        </div>
+        
+        <div class="text-center py-6 max-w-2xl mx-auto">
+            <button id="load-more-btn" class="hidden bg-gray-800 hover:bg-gray-700 text-pink-400 font-bold py-2 px-6 rounded-lg transition-colors">
+                Carregar Mais
+            </button>
+        </div>
+
+    </main>
+
+ <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { collection, query, where, getDocs, doc, getDoc, limit, orderBy, startAfter } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { loadHeader } from './header-loader.js';
+    import { callMarkChatAsReadSafely } from './auth.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const conversationsList = document.getElementById('conversations-list');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const noConversationsMessage = document.getElementById('no-conversations');
+        const loadMoreBtn = document.getElementById('load-more-btn');
+        let currentUser = null;
+        let lastVisibleDoc = null;
+
+        async function fetchChats(lastDoc) {
+            loadingSpinner.classList.remove('hidden');
+            if (!lastDoc) {
+                conversationsList.innerHTML = '';
+            } else {
+                loadMoreBtn.textContent = 'Carregando...';
+            }
+
+            try {
+                const currentUserDoc = await getDoc(doc(db, "users", currentUser.uid));
+                const currentUserData = currentUserDoc.data();
+                const unreadChatsMap = currentUserData.unreadChats || {};
+
+                const chatsRef = collection(db, "chats");
+                let q = query(
+                    chatsRef,
+                    where("participants", "array-contains", currentUser.uid),
+                    orderBy("updatedAt", "desc"),
+                    limit(10)
+                );
+                
+                if (lastDoc) {
+                    q = query(chatsRef, where("participants", "array-contains", currentUser.uid), orderBy("updatedAt", "desc"), startAfter(lastDoc), limit(10));
+                }
+
+                const querySnapshot = await getDocs(q);
+                const chats = [];
+                for (const chatDoc of querySnapshot.docs) {
+                    const chatData = chatDoc.data();
+                    const otherUserId = chatData.participants.find(id => id !== currentUser.uid);
+                    if (!otherUserId) continue;
+
+                    const otherUserDoc = await getDoc(doc(db, "users", otherUserId));
+                    if (otherUserDoc.exists()) {
+                        const otherUserData = otherUserDoc.data();
+                        const lastMessageText = chatData.lastMessage ? chatData.lastMessage.text : 'Inicie a conversa!';
+                        const isUnread = unreadChatsMap[chatDoc.id] > 0;
+
+                        chats.push({
+                            id: chatDoc.id,
+                            lastMessageText: lastMessageText,
+                            otherUserName: otherUserData.displayName,
+                            otherUserPhoto: otherUserData.photoURL,
+                            isUnread: isUnread 
+                        });
+                    }
+                }
+                
+                lastVisibleDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+                renderConversations(chats, !lastDoc);
+                
+                if (querySnapshot.docs.length < 10) {
+                    loadMoreBtn.classList.add('hidden');
+                } else {
+                    loadMoreBtn.classList.remove('hidden');
+                    loadMoreBtn.textContent = 'Carregar Mais';
+                }
+
+            } catch (error) {
+                console.error("Erro ao carregar conversas:", error);
+                conversationsList.innerHTML = '<p class="text-center text-red-400">Ocorreu um erro ao carregar suas conversas.</p>';
+            } finally {
+                loadingSpinner.classList.add('hidden');
+            }
+        }
+        
+        const renderConversations = (chats, isInitialLoad) => {
+            if (isInitialLoad && chats.length === 0) {
+                noConversationsMessage.classList.remove('hidden');
+                lucide.createIcons();
+                return;
+            }
+            
+            const fragment = document.createDocumentFragment();
+            chats.forEach(chat => {
+                const conversationElement = document.createElement('a');
+                conversationElement.href = `/chat.html?chatId=${chat.id}`;
+                conversationElement.dataset.chatId = chat.id;
+                const cardClass = chat.isUnread ? 'bg-gradient-to-r from-gray-800 to-pink-900 shadow-lg' : 'bg-gray-800';
+                conversationElement.className = `conversation-item flex items-center p-4 rounded-lg hover:bg-gray-700 transition-colors duration-200 ${cardClass}`;
+                conversationElement.innerHTML = `
+                    <img src="${chat.otherUserPhoto || 'https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07LwqYdTyH.jpg'}" alt="Foto de ${chat.otherUserName}" class="w-14 h-14 rounded-full object-cover mr-4">
+                    <div class="flex-grow min-w-0">
+                        <h3 class="font-semibold text-lg ${chat.isUnread ? 'text-pink-300' : 'text-white'}">${chat.otherUserName}</h3>
+                        <p class="text-gray-400 truncate">${chat.lastMessageText}</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="text-gray-500"></i>`;
+                fragment.appendChild(conversationElement);
+            });
+
+            if (isInitialLoad) conversationsList.innerHTML = '';
+            conversationsList.appendChild(fragment);
+            lucide.createIcons();
+        };
+
+        conversationsList.addEventListener('click', function(event) {
+            const chatLink = event.target.closest('.conversation-item');
+            if (chatLink) {
+                event.preventDefault();
+                const chatId = chatLink.dataset.chatId;
+
+                chatLink.classList.remove('bg-gradient-to-r', 'from-gray-800', 'to-pink-900', 'shadow-lg');
+                chatLink.classList.add('bg-gray-800');
+                chatLink.querySelector('h3').classList.remove('text-pink-300');
+                
+                callMarkChatAsReadSafely(chatId); 
+                window.location.href = chatLink.href;
+                
+            }
+        });
+
+        loadMoreBtn.addEventListener('click', () => fetchChats(lastVisibleDoc));
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                await loadHeader();
+                await fetchChats(null);
+            } else {
+                window.location.href = '/index.html';
+            }
+        });
+    });
+</script>  
+   <div id="terms-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+    <div class="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full flex flex-col" style="height: 80vh;">
+        <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-white">Termos de Serviço</h2>
+            <button id="close-terms-modal" class="text-gray-400 hover:text-white">&times;</button>
+        </div>
+        <div class="p-6 text-gray-300 overflow-y-auto space-y-4">
+            <p><strong>Última atualização:</strong> 12 de setembro de 2025</p>
+            <p>Bem-vindo(a) à Mimoly! Estes Termos de Serviço ("Termos") governam o seu acesso e uso da plataforma Mimoly, incluindo nosso site, aplicativos e serviços relacionados (coletivamente, a "Plataforma"). Ao criar uma conta ou utilizar nossa Plataforma, você concorda em cumprir e se vincular a estes Termos. Por favor, leia-os com atenção.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">1. ACEITAÇÃO DOS TERMOS</h3>
+            <p>Ao acessar ou usar a Plataforma, você confirma que leu, entendeu e concorda em estar legalmente vinculado a estes Termos e à nossa Política de Privacidade. Se você não concorda com estes Termos, não deve acessar ou usar a Plataforma.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">2. ELEGIBILIDADE</h3>
+            <p>Para criar uma conta e utilizar os serviços da Mimoly, você deve atender aos seguintes critérios:</p>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>Ter no mínimo 18 anos de idade. A Plataforma não se destina a menores de idade.</li>
+                <li>Não ter sido condenado(a) por crime de natureza sexual ou violenta.</li>
+                <li>Não ter sido previamente banido(a) da Plataforma por violação dos nossos Termos.</li>
+            </ul>
+            <p>Ao criar uma conta, você declara e garante que cumpre todos os requisitos de elegibilidade.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">3. DEFINIÇÕES PRINCIPAIS</h3>
+            <p><strong>"Mimos":</strong> São os créditos virtuais adquiridos pelos usuários na Loja da Plataforma. Os Mimos são necessários para iniciar conversas com outros usuários.</p>
+            <p><strong>"Carteira" / "Saldo em Reais":</strong> Representa o valor monetário acumulado por um usuário ao receber e responder a uma primeira mensagem de um chat que não seja gratuito.</p>
+            <p><strong>"Valor de Repasse":</strong> É o percentual do valor de um "Mimo" que é convertido em "Saldo em Reais" e creditado na carteira do usuário que responde à conversa.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">4. FUNCIONAMENTO DA PLATAFORMA</h3>
+            <h4 class="text-md font-semibold text-gray-200 pt-2">4.1. Compra e Uso de Mimos</h4>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>Para iniciar uma conversa com outro usuário, o usuário iniciador deve possuir e utilizar um "Mimo", a menos que se qualifique para uma conversa gratuita promocional.</li>
+                <li>Os "Mimos" são adquiridos através da Loja da Plataforma, mediante pagamento.</li>
+                <li>Os "Mimos" são uma licença de uso limitado para funcionalidades da Plataforma. Eles não possuem valor monetário fora da Plataforma, não são passíveis de reembolso, e não podem ser trocados ou vendidos entre usuários.</li>
+                <li>O valor Repassado em carteira pode variar conforme descontos e novos planos, determinados pela plataforma sem aviso prévio.</li>
+            </ul>
+            <h4 class="text-md font-semibold text-gray-200 pt-2">4.2. Acúmulo de Saldo em Reais</h4>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>Um usuário acumula "Saldo em Reais" em sua carteira quando responde a uma mensagem inicial de um chat pago (que consumiu um "Mimo" do remetente).</li>
+                <li>O valor creditado corresponde ao "Valor de Repasse", que é 50% do valor do Mimo, já deduzido de taxas e impostos.</li>
+                <li>Nenhum valor será creditado por respostas em chats gratuitos ou por mensagens subsequentes na mesma conversa, a menos que a conversa seja reativada com um novo Mimo.</li>
+            </ul>
+            <h3 class="text-lg font-semibold text-white pt-4">5. POLÍTICA DE SAQUES</h3>
+            <h4 class="text-md font-semibold text-gray-200 pt-2">5.1. Condições para Saque</h4>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>O usuário poderá solicitar o saque do seu "Saldo em Reais" acumulado somente quando o valor atingir o montante mínimo de R$ 5,00 (cinco reais).</li>
+                <li>Valores inferiores a R$ 5,00 não são elegíveis para saque e permanecerão na carteira do usuário.</li>
+            </ul>
+            <h4 class="text-md font-semibold text-gray-200 pt-2">5.2. Procedimento de Saque</h4>
+            <p>As solicitações de saque devem ser feitas através da Plataforma. O processamento do saque está sujeito a prazos operacionais e à validação das informações bancárias ou de pagamento fornecidas pelo usuário.</p>
+            <h4 class="text-md font-semibold text-gray-200 pt-2">5.3. Taxas e Impostos</h4>
+            <p>A Mimoly reserva-se o direito de deduzir taxas de processamento e impostos aplicáveis sobre o valor do saque. O valor final a ser transferido será o "Saldo em Reais" menos as deduções cabíveis.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">6. OBRIGAÇÕES DO USUÁRIO</h3>
+            <p>Você concorda em:</p>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>Manter a segurança de sua senha e não compartilhá-la.</li>
+                <li>Ser responsável por todas as atividades realizadas em sua conta.</li>
+                <li>Fornecer informações verdadeiras e atualizadas para sua conta.</li>
+                <li>Não utilizar a Plataforma para fins ilegais, fraudulentos, ou que violem estes Termos.</li>
+                <li>Não enviar conteúdo abusivo, obsceno, odioso, ameaçador, difamatório ou que infrinja os direitos de terceiros.</li>
+            </ul>
+            <h3 class="text-lg font-semibold text-white pt-4">7. CONTEÚDO DO USUÁRIO</h3>
+            <p>Você é o único responsável pelo conteúdo (mensagens, fotos, etc.) que você enviar, publicar ou exibir na Plataforma. Você garante que possui todos os direitos necessários sobre o conteúdo e que ele não viola direitos de terceiros. A Mimoly não se responsabiliza pelo conteúdo gerado por seus usuários.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">8. PROPRIEDADE INTELECTUAL</h3>
+            <p>A Mimoly e seus licenciadores são proprietários de todos os direitos, títulos e interesses na Plataforma, incluindo, sem limitação, todos os direitos de propriedade intelectual. Você concorda em não copiar, modificar, distribuir, vender ou alugar qualquer parte de nossa Plataforma.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">9. LIMITAÇÃO DE RESPONSABILIDADE</h3>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>A Plataforma é fornecida "como está" e "conforme disponível". Não garantimos que a Plataforma será ininterrupta, segura ou livre de erros.</li>
+                <li>Você é o único responsável por suas interações com outros usuários. Recomendamos cautela e bom senso.</li>
+                <li>Em nenhuma circunstância a Mimoly será responsável por quaisquer danos indiretos, incidentais ou consequenciais (incluindo perda de dados, lucros ou danos emocionais) decorrentes do uso da Plataforma.</li>
+            </ul>
+
+            <h3 class="text-lg font-semibold text-white pt-4">10. MODIFICAÇÕES NOS TERMOS</h3>
+            <p>Reservamo-nos o direito de modificar estes Termos a qualquer momento. Caso haja alterações, notificaremos você através da Plataforma ou por e-mail. O uso contínuo da Plataforma após a data de vigência das alterações constituirá sua aceitação dos novos Termos.</p>
+
+            <h3 class="text-lg font-semibold text-white pt-4">11. LEI APLICÁVEL E FORO</h3>
+            <p>Estes Termos serão regidos e interpretados de acordo com as leis da República Federativa do Brasil para dirimir quaisquer controvérsias oriundas destes Termos.</p>
+
+            <h3 class="text-lg font-semibold text-white pt-4">12. CONTATO</h3>
+            <p>Em caso de dúvidas sobre estes Termos de Serviço, entre em contato conosco através do e-mail: contato@mimoly.com.br</p>
+        </div>
+        <div class="p-4 border-t border-gray-700 text-right">
+            <button id="close-terms-modal-2" class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-6 rounded-lg">Fechar</button>
+        </div>
+    </div>
+</div>
+<script>
+    const termsModal = document.getElementById('terms-modal');
+    const openTermsLink = document.getElementById('open-terms-modal-mobile');
+    const closeTermsBtn = document.getElementById('close-terms-modal');
+    const closeTermsBtn2 = document.getElementById('close-terms-modal-2');
+
+    function openTermsModal(e) {
+        if (e) e.preventDefault();
+        termsModal.classList.remove('hidden');
+    }
+
+    function closeTermsModal() {
+        termsModal.classList.add('hidden');
+    }
+
+    if (openTermsLink) {
+        openTermsLink.addEventListener('click', openTermsModal);
+    }
+    closeTermsBtn.addEventListener('click', closeTermsModal);
+    closeTermsBtn2.addEventListener('click', closeTermsModal);
+</script>
+<script src="/header-loader.js"></script>
+<script src="/lucide.js"></script>
+</body>
+</html>

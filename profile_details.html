@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mimoly - Perfil de Usuário</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/styles.css">
+    <style> 
+        body { font-family: 'Poppins', sans-serif; } 
+        #photo-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            cursor: pointer;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        #photo-modal.show {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200">
+
+    <header class="bg-black/80 backdrop-blur-sm shadow-lg sticky top-0 z-50 w-full"></header>
+
+    <main class="container mx-auto p-6 mt-4 min-h-screen">
+        <div id="loading-profile" class="text-center py-10">
+            <svg class="animate-spin h-10 w-10 text-pink-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <p class="text-gray-400 mt-4">Carregando perfil...</p>
+        </div>
+        <div id="profile-details-content" class="hidden max-w-3xl mx-auto bg-gray-800 rounded-2xl p-8 shadow-lg">
+        </div>
+    </main>
+
+    <div id="mimo-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-lg shadow-xl p-8 max-w-sm mx-4 text-center">
+            <h2 id="mimo-modal-title" class="text-2xl font-bold text-white mb-4"></h2>
+            <p id="mimo-modal-text" class="text-gray-400 mb-6"></p>
+            <div class="flex justify-center space-x-4">
+                <button id="cancel-mimo-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-full">Cancelar</button>
+                <button id="confirm-mimo-btn" class="bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 text-white font-bold py-2 px-6 rounded-full"></button>
+            </div>
+        </div>
+    </div>
+
+   <div id="photo-modal" class="hidden">
+    <button id="close-photo-modal-btn" class="absolute top-4 right-4 text-white text-3xl z-[101] p-2 bg-black/50 rounded-full hover:bg-black/70 transition-colors">
+        <i data-lucide="x" class="w-8 h-8"></i>
+    </button>
+    
+    <div id="close-tip" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white bg-black/50 px-3 py-1.5 rounded-full text-sm font-semibold pointer-events-none opacity-100 transition-opacity duration-500">
+        Clique na imagem ou no 'X' para fechar.
+    </div>
+
+    <img id="photo-full-screen" src="" class="max-w-full max-h-full object-contain">
+    </div>
+
+   <script type="module">
+        import { auth, db } from './firebase-config.js';
+        import { callInitiateChatSafely } from './auth.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { loadHeader } from './header-loader.js';
+        
+        // NOVA FUNÇÃO: Centraliza a lógica de fechar o modal de foto
+        const closePhotoModal = () => {
+            const photoModal = document.getElementById('photo-modal');
+            const closeTip = document.getElementById('close-tip');
+            
+            photoModal.classList.remove('show');
+            // A classe 'hidden' será adicionada após a transição
+            setTimeout(() => photoModal.classList.add('hidden'), 300);
+            
+            // Garante que a dica suma (para a próxima abertura)
+            if (closeTip) closeTip.style.opacity = '0';
+        };
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const loadingProfile = document.getElementById('loading-profile');
+            const profileDetailsContent = document.getElementById('profile-details-content');
+            const photoModal = document.getElementById('photo-modal');
+            const photoFullScreen = document.getElementById('photo-full-screen');
+            // NOVAS VARIÁVEIS DOM
+            const closePhotoModalBtn = document.getElementById('close-photo-modal-btn');
+            const closeTip = document.getElementById('close-tip'); 
+            
+            const mimoModal = document.getElementById('mimo-modal');
+            const mimoModalTitle = document.getElementById('mimo-modal-title');
+            const mimoModalText = document.getElementById('mimo-modal-text');
+            const confirmMimoBtn = document.getElementById('confirm-mimo-btn');
+            const cancelMimoBtn = document.getElementById('cancel-mimo-btn');
+
+            let currentUser = null;
+            let targetUserId = null;
+            let currentUserData = null; 
+
+            const renderProfile = (userData) => {
+                profileDetailsContent.innerHTML = `
+                    <div class="text-center mb-8">
+                        <img id="main-photo-full-screen" src="${userData.photoURL || 'https://t4.ftcdn.net/jpg/05/49/98/39/360_F_549983970_bRCkYfk0P6PP5fKbMhZMIb07LwqYdTyH.jpg'}" class="w-40 h-40 object-cover rounded-full mx-auto border-4 border-pink-500 cursor-pointer">
+                        <h2 class="text-3xl font-bold text-white mt-4">${userData.displayName}</h2>
+                        <p class="text-gray-400 text-lg">${userData.idade || ''}${userData.cidade ? `, ${userData.cidade}` : ''}</p>
+                        <p class="text-gray-300 mt-3 italic max-w-xl mx-auto">${userData.bio || 'Nenhuma bio disponível.'}</p>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                        ${(userData.photo1URL ? `<img src="${userData.photo1URL}" class="w-full h-64 object-cover rounded-lg cursor-pointer" data-full-photo="${userData.photo1URL}">` : '<div class="w-full h-64 bg-gray-700 rounded-lg"></div>')}
+                        ${(userData.photo2URL ? `<img src="${userData.photo2URL}" class="w-full h-64 object-cover rounded-lg cursor-pointer" data-full-photo="${userData.photo2URL}">` : '<div class="w-full h-64 bg-gray-700 rounded-lg"></div>')}
+                    </div>
+                    <div class="flex justify-center mt-6">
+                        <button id="initiate-chat-btn" class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 px-8 rounded-full flex items-center justify-center">
+                            <i data-lucide="message-circle" class="inline-block mr-2"></i>
+                            <span id="chat-btn-text">Chat</span>
+                        </button>
+                    </div>
+                `;
+                lucide.createIcons();
+                
+                // NOVO: Clique na foto principal
+                document.getElementById('main-photo-full-screen').addEventListener('click', () => {
+                    photoFullScreen.src = document.getElementById('main-photo-full-screen').src;
+                    photoModal.classList.remove('hidden');
+                    setTimeout(() => photoModal.classList.add('show'), 10);
+                    
+                    // Lógica para mostrar a dica e sumir
+                    if (closeTip) {
+                        closeTip.style.opacity = '1';
+                        setTimeout(() => {
+                            closeTip.style.opacity = '0';
+                        }, 5000); 
+                    }
+                });
+                
+                // NOVO: Clique nas fotos da galeria
+                document.querySelectorAll('img[data-full-photo]').forEach(img => {
+                    img.addEventListener('click', (e) => {
+                        photoFullScreen.src = e.target.dataset.fullPhoto;
+                        photoModal.classList.remove('hidden');
+                        setTimeout(() => photoModal.classList.add('show'), 10);
+                        
+                        // Lógica para mostrar a dica e sumir
+                        if (closeTip) {
+                            closeTip.style.opacity = '1';
+                            setTimeout(() => {
+                                closeTip.style.opacity = '0';
+                            }, 5000); 
+                        }
+                    });
+                });
+
+                document.getElementById('initiate-chat-btn').addEventListener('click', async () => {
+                    const chatId = [currentUser.uid, targetUserId].sort().join('_');
+                    const chatRef = doc(db, "chats", chatId);
+
+                    try {
+                        const chatDoc = await getDoc(chatRef);
+                        if (chatDoc.exists()) {
+                            const chatData = chatDoc.data();
+                            const expiresAt = chatData.accessExpiresAt?.toDate();
+                            if (expiresAt && expiresAt > new Date()) {
+                                window.location.href = `/chat.html?chatId=${chatId}`;
+                                return;
+                            }
+                        }
+                    } catch (error) {
+                        console.warn("Não foi possível verificar o chat existente (isto é esperado se o chat for novo):", error.message);
+                    }
+
+                    try {
+                        const lastFreeDate = currentUserData.lastFreeChatDate?.toDate();
+                        const now = new Date();
+                        const oneWeekInMillis = 7 * 24 * 60 * 60 * 1000;
+                        let hasFreeChat = !lastFreeDate || (now.getTime() - lastFreeDate.getTime()) >= oneWeekInMillis;
+                        
+                        if (!hasFreeChat && (!currentUserData.saldoMimos || currentUserData.saldoMimos < 1)) {
+                            alert("Você não tem Mimos. Compre na loja para conversar!");
+                            window.location.href = '/loja.html';
+                            return; 
+                        }
+
+                        if (hasFreeChat) {
+                            mimoModalTitle.textContent = "Um Mimo para Você!";
+                            mimoModalText.innerHTML = "Este é o seu chat grátis da semana! Essa conversa <b>não terá desconto</b> no seu saldo de mimos.";
+                            confirmMimoBtn.textContent = "Iniciar chat";
+                        } else {
+                            mimoModalTitle.textContent = "Enviar Pedido de Conversa";
+                            mimoModalText.innerHTML = `Deseja enviar um pedido de conversa para <span class="font-bold text-white">${userData.displayName}</span>? Um Mimo será descontado <strong>apenas se a pessoa responder</strong>.`;
+                            confirmMimoBtn.textContent = "Confirmar";
+                        }
+                        mimoModal.classList.remove('hidden');
+                    } catch (error) {
+                        console.error("Ocorreu um erro inesperado ao preparar o chat:", error);
+                        alert("Ocorreu um erro inesperado. Tente novamente.");
+                    }
+                });
+            };
+            
+            // NOVO: Listener Unificado de Fechamento (Substitui o antigo)
+            photoModal.addEventListener('click', (e) => {
+                // Verifica o clique no fundo, na imagem, ou no botão de fechar.
+                if (e.target === photoModal || e.target === photoFullScreen || e.target.closest('#close-photo-modal-btn')) {
+                    closePhotoModal();
+                }
+            });
+
+            // NOVO: Listener dedicado ao Botão X
+            closePhotoModalBtn.addEventListener('click', closePhotoModal);
+
+            cancelMimoBtn.addEventListener('click', () => {
+                mimoModal.classList.add('hidden');
+            });
+
+            confirmMimoBtn.addEventListener('click', async () => {
+                confirmMimoBtn.disabled = true;
+                const originalText = confirmMimoBtn.textContent;
+                confirmMimoBtn.textContent = 'Enviando...';
+                try {
+                    const result = await callInitiateChatSafely(targetUserId);
+                    if (result && result.success) {
+                        alert("Pedido de conversa enviado! Abrindo o chat...");
+                        window.location.href = `/chat.html?chatId=${result.chatId}`;
+                    } else {
+                        throw new Error("Não foi possível iniciar o chat.");
+                    }
+                } catch (error) {
+                    alert(`Erro: ${error.message}`);
+                } finally {
+                    confirmMimoBtn.disabled = false;
+                    confirmMimoBtn.textContent = originalText;
+                    mimoModal.classList.add('hidden');
+                }
+            });
+
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    window.location.href = '/index.html';
+                    return;
+                }
+                currentUser = user;
+                await loadHeader();
+                
+                try {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if(userDoc.exists()) {
+                        currentUserData = userDoc.data();
+                    } else {
+                        throw new Error("Seu perfil não foi encontrado.");
+                    }
+
+                    targetUserId = new URLSearchParams(window.location.search).get('userId');
+                    if (!targetUserId || targetUserId === currentUser.uid) {
+                        window.location.href = '/perfil.html';
+                        return;
+                    }
+
+                    const targetUserDoc = await getDoc(doc(db, "users", targetUserId));
+                    if (targetUserDoc.exists()) {
+                        renderProfile(targetUserDoc.data());
+                        loadingProfile.style.display = 'none';
+                        profileDetailsContent.classList.remove('hidden');
+                    } else {
+                        throw new Error("Perfil não encontrado.");
+                    }
+                } catch (error) {
+                    loadingProfile.innerHTML = `<p class="text-red-400 text-center">${error.message}</p>`;
+                }
+            });
+        });
+    </script>
+     <div id="terms-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+    <div class="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full flex flex-col" style="height: 80vh;">
+        <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-white">Termos de Serviço</h2>
+            <button id="close-terms-modal" class="text-gray-400 hover:text-white">&times;</button>
+        </div>
+        <div class="p-6 text-gray-300 overflow-y-auto space-y-4">
+            <p><strong>Última atualização:</strong> 12 de setembro de 2025</p>
+            <p>Bem-vindo(a) à Mimoly! Estes Termos de Serviço ("Termos") governam o seu acesso e uso da plataforma Mimoly, incluindo nosso site, aplicativos e serviços relacionados (coletivamente, a "Plataforma"). Ao criar uma conta ou utilizar nossa Plataforma, você concorda em cumprir e se vincular a estes Termos. Por favor, leia-os com atenção.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">1. ACEITAÇÃO DOS TERMOS</h3>
+            <p>Ao acessar ou usar a Plataforma, você confirma que leu, entendeu e concorda em estar legalmente vinculado a estes Termos e à nossa Política de Privacidade. Se você não concorda com estes Termos, não deve acessar ou usar a Plataforma.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">2. ELEGIBILIDADE</h3>
+            <p>Para criar uma conta e utilizar os serviços da Mimoly, você deve atender aos seguintes critérios:</p>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>Ter no mínimo 18 anos de idade. A Plataforma não se destina a menores de idade.</li>
+                <li>Não ter sido condenado(a) por crime de natureza sexual ou violenta.</li>
+                <li>Não ter sido previamente banido(a) da Plataforma por violação dos nossos Termos.</li>
+            </ul>
+            <p>Ao criar uma conta, você declara e garante que cumpre todos os requisitos de elegibilidade.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">3. DEFINIÇÕES PRINCIPAIS</h3>
+            <p><strong>"Mimos":</strong> São os créditos virtuais adquiridos pelos usuários na Loja da Plataforma. Os Mimos são necessários para iniciar conversas com outros usuários.</p>
+            <p><strong>"Carteira" / "Saldo em Reais":</strong> Representa o valor monetário acumulado por um usuário ao receber e responder a uma primeira mensagem de um chat que não seja gratuito.</p>
+            <p><strong>"Valor de Repasse":</strong> É o percentual do valor de um "Mimo" que é convertido em "Saldo em Reais" e creditado na carteira do usuário que responde à conversa.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">4. FUNCIONAMENTO DA PLATAFORMA</h3>
+            <h4 class="text-md font-semibold text-gray-200 pt-2">4.1. Compra e Uso de Mimos</h4>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>Para iniciar uma conversa com outro usuário, o usuário iniciador deve possuir e utilizar um "Mimo", a menos que se qualifique para uma conversa gratuita promocional.</li>
+                <li>Os "Mimos" são adquiridos através da Loja da Plataforma, mediante pagamento.</li>
+                <li>Os "Mimos" são uma licença de uso limitado para funcionalidades da Plataforma. Eles não possuem valor monetário fora da Plataforma, não são passíveis de reembolso, e não podem ser trocados ou vendidos entre usuários.</li>
+                <li>O valor Repassado em carteira pode variar conforme descontos e novos planos, determinados pela plataforma sem aviso prévio.</li>
+            </ul>
+            <h4 class="text-md font-semibold text-gray-200 pt-2">4.2. Acúmulo de Saldo em Reais</h4>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>Um usuário acumula "Saldo em Reais" em sua carteira quando responde a uma mensagem inicial de um chat pago (que consumiu um "Mimo" do remetente).</li>
+                <li>O valor creditado corresponde ao "Valor de Repasse", que é 50% do valor do Mimo, já deduzido de taxas e impostos.</li>
+                <li>Nenhum valor será creditado por respostas em chats gratuitos ou por mensagens subsequentes na mesma conversa, a menos que a conversa seja reativada com um novo Mimo.</li>
+            </ul>
+            <h3 class="text-lg font-semibold text-white pt-4">5. POLÍTICA DE SAQUES</h3>
+            <h4 class="text-md font-semibold text-gray-200 pt-2">5.1. Condições para Saque</h4>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>O usuário poderá solicitar o saque do seu "Saldo em Reais" acumulado somente quando o valor atingir o montante mínimo de R$ 5,00 (cinco reais).</li>
+                <li>Valores inferiores a R$ 5,00 não são elegíveis para saque e permanecerão na carteira do usuário.</li>
+            </ul>
+            <h4 class="text-md font-semibold text-gray-200 pt-2">5.2. Processo de Saque</h4>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>Os saques são processados via PIX. O usuário é o único responsável por fornecer uma chave PIX correta e válida em seu perfil.</li>
+                <li>A Plataforma não se responsabiliza por transferências enviadas para chaves PIX incorretas informadas pelo usuário.</li>
+                <li>O prazo para processamento do saque será informado no momento da solicitação.</li>
+            </ul>
+            <h3 class="text-lg font-semibold text-white pt-4">6. CONDUTA DO USUÁRIO E CONTEÚDO</h3>
+            <p>Você concorda em não:</p>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>Publicar conteúdo que seja ilegal, odioso, ameaçador, difamatório, pornográfico ou que incite à violência.</li>
+                <li>Usar a Plataforma para qualquer finalidade ilegal ou fraudulenta.</li>
+                <li>Assediar, intimidar ou perseguir outros usuários.</li>
+                <li>Criar perfis falsos, se passar por outra pessoa ou fornecer informações falsas, como idade ou identidade.</li>
+                <li>Utilizar a Plataforma para fins comerciais, spam ou solicitação não autorizada.</li>
+            </ul>
+            <p>Reservamo-nos o direito de remover qualquer conteúdo e suspender ou excluir permanentemente contas que violem estas regras, a nosso exclusivo critério e sem aviso prévio.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">7. ENCERRAMENTO E EXCLUSÃO DE CONTA</h3>
+            <h4 class="text-md font-semibold text-gray-200 pt-2">7.1. Exclusão pelo Usuário</h4>
+            <p>Você pode solicitar a exclusão da sua conta a qualquer momento através das configurações do seu perfil.</p>
+            <h4 class="text-md font-semibold text-gray-200 pt-2">7.2. Consequências da Exclusão de Conta</h4>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>A exclusão da conta é uma ação irreversível. Todos os seus dados, conversas, Mimos restantes e saldo em carteira serão permanentemente perdidos.</li>
+                <li class="font-bold text-amber-300">PERDA DE SALDO: O usuário declara ter ciência, concorda e aceita que, ao solicitar a exclusão de sua conta, qualquer "Saldo em Reais" acumulado em sua carteira que seja inferior ao valor mínimo de saque de R$ 5,00 será perdido e retido pela Plataforma. Não haverá direito a qualquer tipo de reembolso ou pagamento por valores abaixo do mínimo de saque no momento da exclusão da conta.</li>
+            </ul>
+            <h4 class="text-md font-semibold text-gray-200 pt-2">7.3. Suspensão ou Exclusão pela Plataforma</h4>
+            <p>A Mimoly reserva-se o direito de suspender ou excluir sua conta, sem aviso prévio, caso você viole qualquer um destes Termos.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">8. PROPRIEDADE INTELECTUAL</h3>
+            <p>Todos os direitos sobre a marca Mimoly, logos, software, textos e design da Plataforma são de propriedade exclusiva da Mimoly. O conteúdo gerado pelo usuário (fotos, bio, mensagens) permanece de propriedade do usuário, mas ao publicá-lo, você concede à Mimoly uma licença mundial, não exclusiva e isenta de royalties para hospedar, exibir, reproduzir e distribuir tal conteúdo com o único propósito de operar e prover os serviços da Plataforma.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">9. ISENÇÃO DE GARANTIAS E LIMITAÇÃO DE RESPONSABILIDADE</h3>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>A Plataforma é fornecida "no estado em que se encontra", sem garantias de qualquer tipo. Não garantimos que o serviço será ininterrupto, seguro ou livre de erros.</li>
+                <li>A Mimoly não realiza verificação de antecedentes criminais de seus usuários. Você é o único responsável por suas interações com outros usuários. Recomendamos cautela e bom senso.</li>
+                <li>Em nenhuma circunstância a Mimoly será responsável por quaisquer danos indiretos, incidentais ou consequenciais (incluindo perda de dados, lucros ou danos emocionais) decorrentes do uso da Plataforma.</li>
+            </ul>
+            <h3 class="text-lg font-semibold text-white pt-4">10. MODIFICAÇÕES NOS TERMOS</h3>
+            <p>Reservamo-nos o direito de modificar estes Termos a qualquer momento. Caso haja alterações, notificaremos você através da Plataforma ou por e-mail. O uso contínuo da Plataforma após a data de vigência das alterações constituirá sua aceitação dos novos Termos.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">11. LEI APLICÁVEL E FORO</h3>
+            <p>Estes Termos serão regidos e interpretados de acordo com as leis da República Federativa do Brasil para dirimir quaisquer controvérsias oriundas destes Termos.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">12. CONTATO</h3>
+            <p>Em caso de dúvidas sobre estes Termos de Serviço, entre em contato conosco através do e-mail: contato@mimoly.com.br</p>
+        </div>
+        <div class="p-4 border-t border-gray-700 text-right">
+            <button id="close-terms-modal-2" class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-6 rounded-lg">Fechar</button>
+        </div>
+    </div>
+</div>
+<script>
+    const termsModal = document.getElementById('terms-modal');
+    const openTermsLink = document.getElementById('open-terms-modal-mobile');
+    const closeTermsBtn = document.getElementById('close-terms-modal');
+    const closeTermsBtn2 = document.getElementById('close-terms-modal-2');
+
+    function openTermsModal(e) {
+        if (e) e.preventDefault();
+        termsModal.classList.remove('hidden');
+    }
+
+    function closeTermsModal() {
+        termsModal.classList.add('hidden');
+    }
+
+    if (openTermsLink) {
+        openTermsLink.addEventListener('click', openTermsModal);
+    }
+    
+    closeTermsBtn.addEventListener('click', closeTermsModal);
+    closeTermsBtn2.addEventListener('click', closeTermsModal);
+</script>
+
+</body>
+</html>

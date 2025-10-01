@@ -1,0 +1,103 @@
+/* /styles.css */
+body {
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Estilo da caixa de mensagem de feedback */
+#message-box {
+    position: fixed;
+    bottom: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 1rem 2rem;
+    border-radius: 0.5rem;
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: bottom 0.5s ease-in-out;
+    z-index: 1000;
+}
+#message-box.show {
+    bottom: 20px;
+}
+
+/* Estilo do Logo nas páginas de login/cadastro */
+.mimoly-logo {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    height: 80px;
+    z-index: 30;
+    transition: transform 0.3s ease-in-out;
+}
+.mimoly-logo:hover {
+    transform: scale(1.1);
+}
+@media (min-width: 768px) {
+    .mimoly-logo {
+        height: 100px;
+    }
+}
+
+/* Outros estilos que você queira centralizar */
+.file-input { display: none; }
+.remove-photo-btn { display: none; }
+.has-photo .remove-photo-btn { display: block; }
+
+/* Estilos para o Modal de Filtro */
+#filter-modal {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+#filter-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+
+@media (max-width: 640px) { /* Para telas pequenas, como celulares */
+    .chat-header-name {
+        font-size: 1.125rem; /* text-lg em Tailwind, um pouco menor que o padrão */
+    }
+    .chat-header-flex {
+        gap: 0.5rem; /* Espaço menor entre os itens do cabeçalho */
+    }
+}
+/* Estilos para o extrato da carteira em dispositivos móveis */
+@media (max-width: 640px) {
+    /* Reduz a fonte do nome do remetente e da data */
+    #statement-list .font-semibold {
+        font-size: 0.5rem; 
+    }
+    
+    #statement-list .text-sm {
+        font-size: 0.5rem;
+    }
+    
+    /* Reduz a fonte do valor recebido */
+    #statement-list .font-bold.text-lg {
+        font-size: 0.1rem; 
+    }
+}
+
+/* Adicione este código ao final do seu arquivo /styles.css */
+
+.text-gradient {
+  /* Cores do gradiente (as mesmas do botão: pink-500 para orange-500) */
+  background: linear-gradient(to right, #ec4899, #f97316); 
+  
+  /* Faz o fundo ser aplicado apenas ao texto */
+  -webkit-background-clip: text;
+  background-clip: text;
+
+  /* Deixa o texto transparente para que o fundo (gradiente) apareça */
+  color: transparent;
+}

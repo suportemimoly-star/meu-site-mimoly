@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mimoly - Conexões Reais, Conversas Valorizadas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/styles.css">
+    
+    <style>
+        #message-box {
+            position: fixed; bottom: -100px; left: 50%;
+            transform: translateX(-50%); padding: 1rem 2rem; border-radius: 0.5rem;
+            color: white; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: bottom 0.5s ease-in-out; z-index: 100;
+        }
+        
+        #message-box.show { bottom: 20px; }
+        .mimoly-logo {
+            position: absolute; top: 24px; left: 24px;
+            height: 80px; z-index: 30;
+        }
+        @media (min-width: 768px) { .mimoly-logo { height: 100px; } }
+
+        #signup-modal {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        #signup-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        #signup-modal-content {
+            background-color: #1f2937;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 28rem;
+            position: relative;
+            transform: translateY(20px);
+            transition: transform 0.3s ease-in-out;
+        }
+        #signup-modal.show #signup-modal-content {
+            transform: translateY(0);
+        }
+        #close-signup-modal {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            color: #9ca3af;
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        #close-signup-modal:hover {
+            color: #fff;
+        }
+    </style>
+
+</head>
+<body class="text-gray-300 bg-gray-900">
+
+    <img src="/images/mimoly-logo.png" alt="Logo Mimoly" class="mimoly-logo">
+
+    <div class="absolute top-6 right-6 z-20">
+        <a href="/login.html" class="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-bold py-2 px-5 rounded-full shadow-lg transition-colors">
+            Entrar
+        </a>
+    </div>
+
+    <main>
+        <section id="hero" class="relative text-white min-h-screen flex items-center justify-center">
+            <div class="absolute inset-0">
+                <img src="/images/garota-mimoly.png" alt="Mulher sorridente" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black/60"></div>
+            </div>
+            <div class="relative container mx-auto px-6 text-center py-16">
+                <h1 class="text-4xl md:text-6xl font-extrabold text-white leading-tight mb-4 drop-shadow-lg">
+                    Conexões Reais, <br class="hidden md:block"> Conversas Valorizadas.
+                </h1>
+                <p class="text-lg md:text-xl text-gray-200 max-w-3xl mx-auto mb-8 drop-shadow-md">
+                    A primeira plataforma de encontros onde seu tempo e bate-papo valem Dinheiro!
+                </p>
+                <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-md mx-auto">
+                    <button id="google-login-btn-1" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center space-x-3 transition-transform transform hover:scale-105">
+                        <svg class="w-6 h-6" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C39.902,36.631,44,30.651,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
+                        <span>Continuar com o Google</span>
+                    </button>
+                    <p class="text-sm text-gray-600 mt-4">
+                        ou <a href="#" id="open-signup-modal-btn" class="text-pink-500 hover:underline font-semibold">cadastre-se com seu e-mail</a>
+                    </p>
+                </div>
+                 <p class="text-xs text-gray-300 mt-4">Ao continuar, você concorda com nossos <a href="#" id="open-terms-modal-main" class="underline hover:text-white">Termos de Serviço</a>.</p>
+            </div>
+        </section>
+    </main>
+    
+    <div id="message-box" class="bg-gray-800"></div>
+
+    <div id="signup-modal">
+        <div id="signup-modal-content">
+            <button id="close-signup-modal">&times;</button>
+            <h2 class="text-2xl font-bold text-white mb-6 text-center">Criar Conta</h2>
+            <form id="signup-form" class="space-y-4">
+                <div><label for="signup-name" class="block text-sm font-medium text-gray-400 mb-1">Nome</label><input type="text" id="signup-name" placeholder="Seu Nome" required pattern="[^@]+"  oninvalid="this.setCustomValidity('O nome não pode ser um endereço de e-mail')" oninput="this.setCustomValidity('')" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white"></div>
+                <div><label for="signup-email" class="block text-sm font-medium text-gray-400 mb-1">E-mail</label><input type="email" id="signup-email" placeholder="seuemail@exemplo.com" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white"></div>
+                <div><label for="signup-password" class="block text-sm font-medium text-gray-400 mb-1">Senha</label><input type="password" id="signup-password" placeholder="Mínimo 6 caracteres" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white"></div>
+                <div><label for="signup-confirm-password" class="block text-sm font-medium text-gray-400 mb-1">Confirmar Senha</label><input type="password" id="signup-confirm-password" placeholder="Repita a senha" required class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white"></div>
+                <div class="flex items-start space-x-3 !mt-5">
+            <input type="checkbox" id="signup-terms-agree" required class="mt-1 h-4 w-4 rounded border-gray-500 bg-gray-700 text-pink-600 focus:ring-pink-500">
+            <label for="signup-terms-agree" class="text-sm text-gray-400">
+                Eu li e concordo com os 
+                <a href="#" id="open-terms-modal-from-signup" class="font-semibold text-pink-500 hover:underline">Termos de Serviço</a>.
+            </label>
+        </div>
+                <button type="submit" id="signup-btn" class="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 rounded-lg transition-colors !mt-6">Cadastrar</button>
+            </form>
+        </div>
+    </div>
+
+    <script> lucide.createIcons(); </script>
+   <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const googleProvider = new GoogleAuthProvider();
+        googleProvider.setCustomParameters({ prompt: 'select_account' });
+        const messageBox = document.getElementById('message-box');
+        
+        const showMessage = (message, isError = false) => {
+            messageBox.textContent = message;
+            messageBox.style.backgroundColor = isError ? '#ef4444' : '#22c55e';
+            messageBox.classList.add('show');
+            setTimeout(() => { messageBox.classList.remove('show'); }, 3000);
+        };
+
+        const handleGoogleLogin = async (event) => {
+            const button = event.currentTarget;
+            const originalText = button.querySelector('span').textContent;
+            button.disabled = true;
+            button.querySelector('span').textContent = 'Carregando...';
+
+            try {
+                const result = await signInWithPopup(auth, googleProvider);
+                const { user } = result;
+                const userRef = doc(db, "users", user.uid);
+                const userDoc = await getDoc(userRef);
+
+                if (!userDoc.exists()) {
+                    await setDoc(userRef, {
+                        uid: user.uid, displayName: user.displayName, email: user.email,
+                        photoURL: user.photoURL || '', curtidas: 0, saldoMimos: 0, saldoReais: 0,
+                        createdAt: serverTimestamp(), lastLogin: serverTimestamp(),
+                        profileComplete: false // Força o preenchimento de CPF, etc.
+                    });
+                     window.location.href = '/perfil.html?msg=complete-profile';
+                } else {
+                    await updateDoc(userRef, { lastLogin: serverTimestamp() });
+                    const userData = userDoc.data();
+                    if (userData.profileComplete) {
+                        window.location.href = '/app.html';
+                    } else {
+                        window.location.href = '/perfil.html?msg=complete-profile';
+                    }
+                }
+
+            } catch (error) {
+                showMessage(error.code === 'auth/popup-closed-by-user' ? "O pop-up de login foi fechado." : "Ocorreu um erro.", true);
+                button.disabled = false;
+                button.querySelector('span').textContent = originalText;
+            }
+        };
+        
+        document.getElementById('google-login-btn-1').addEventListener('click', handleGoogleLogin);
+
+        const signupModal = document.getElementById('signup-modal');
+        const openSignupModalBtn = document.getElementById('open-signup-modal-btn');
+        const closeSignupModalBtn = document.getElementById('close-signup-modal');
+
+        const termsModal = document.getElementById('terms-modal');
+        const closeTermsBtn = document.getElementById('close-terms-modal');
+        const closeTermsBtn2 = document.getElementById('close-terms-modal-2');
+        const openTermsLinkMain = document.getElementById('open-terms-modal-main');
+        const openTermsLinkSignup = document.getElementById('open-terms-modal-from-signup');
+
+        function openTermsModal(e) {
+            e.preventDefault();
+            termsModal.classList.remove('hidden');
+        }
+
+        function closeTermsModal() {
+            termsModal.classList.add('hidden');
+        }
+
+        openTermsLinkMain.addEventListener('click', openTermsModal);
+        openTermsLinkSignup.addEventListener('click', openTermsModal);
+        closeTermsBtn.addEventListener('click', closeTermsModal);
+        closeTermsBtn2.addEventListener('click', closeTermsModal);
+        
+        openSignupModalBtn.addEventListener('click', (e) => { 
+            e.preventDefault(); 
+            signupModal.classList.add('show'); 
+        });
+        
+        closeSignupModalBtn.addEventListener('click', () => {
+            signupModal.classList.remove('show');
+        });
+        
+        signupModal.addEventListener('click', (e) => { 
+            if(e.target === signupModal) {
+                signupModal.classList.remove('show');
+            }
+        });
+
+        const signupForm = document.getElementById('signup-form');
+        
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const termsCheckbox = document.getElementById('signup-terms-agree');
+            if (!termsCheckbox.checked) {
+                showMessage("Você precisa aceitar os Termos de Serviço para continuar.", true);
+                return;
+            }
+            
+            const name = document.getElementById('signup-name').value.trim();
+            const email = document.getElementById('signup-email').value.trim();
+            const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm-password').value;           
+
+            const formattedName = name.toUpperCase().slice(0, 15);
+
+            if (password.length < 6 || password !== confirmPassword) {
+                showMessage(password.length < 6 ? "A senha deve ter no mínimo 6 caracteres." : "As senhas não coincidem.", true);
+                return;
+            }
+            
+            const signupBtn = document.getElementById('signup-btn');
+            signupBtn.disabled = true;
+            signupBtn.textContent = 'Cadastrando...';
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const { user } = userCredential;               
+               
+                await updateProfile(user, { displayName: formattedName });
+                await setDoc(doc(db, "users", user.uid), {
+                    uid: user.uid,
+                    displayName: formattedName,
+                    email: user.email,
+                    photoURL: '',
+                    curtidas: 0,
+                    saldoMimos: 0,
+                    saldoReais: 0,
+                    createdAt: serverTimestamp(),
+                    lastLogin: serverTimestamp(),
+                    profileComplete: false
+                });
+                
+                window.location.href = '/perfil.html?msg=complete-profile'; 
+
+            } catch (error) {
+                console.error("Erro no cadastro:", error);
+                let friendlyMessage = "Erro ao criar a conta.";
+                if (error.code === 'auth/email-already-in-use') {
+                    friendlyMessage = "Este e-mail já está em uso.";
+                }
+                showMessage(friendlyMessage, true);
+            } finally {
+                signupBtn.disabled = false;
+                signupBtn.textContent = 'Cadastrar';
+            }
+        });
+    });
+</script>
+    <div id="terms-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+        <div class="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full flex flex-col" style="height: 80vh;">
+            <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-white">Termos de Serviço</h2>
+                <button id="close-terms-modal" class="text-gray-400 hover:text-white">&times;</button>
+            </div>
+            <div class="p-6 text-gray-300 overflow-y-auto space-y-4">
+                <p><strong>Última atualização:</strong> 12 de setembro de 2025</p>
+                <p>Bem-vindo(a) à Mimoly! Estes Termos de Serviço ("Termos") governam o seu acesso e uso da plataforma Mimoly, incluindo nosso site, aplicativos e serviços relacionados (coletivamente, a "Plataforma"). Ao criar uma conta ou utilizar nossa Plataforma, você concorda em cumprir e se vincular a estes Termos. Por favor, leia-os com atenção.</p>
+                <h3 class="text-lg font-semibold text-white pt-4">1. ACEITAÇÃO DOS TERMOS</h3>
+                <p>Ao acessar ou usar a Plataforma, você confirma que leu, entendeu e concorda em estar legalmente vinculado a estes Termos e à nossa Política de Privacidade. Se você não concorda com estes Termos, não deve acessar ou usar a Plataforma.</p>
+                <h3 class="text-lg font-semibold text-white pt-4">2. ELEGIBILIDADE</h3>
+                <p>Para criar uma conta e utilizar os serviços da Mimoly, você deve atender aos seguintes critérios:</p>
+                <ul class="list-disc list-inside pl-4 space-y-1">
+                    <li>Ter no mínimo 18 anos de idade. A Plataforma não se destina a menores de idade.</li>
+                    <li>Não ter sido condenado(a) por crime de natureza sexual ou violenta.</li>
+                    <li>Não ter sido previamente banido(a) da Plataforma por violação dos nossos Termos.</li>
+                </ul>
+                <p>Ao criar uma conta, você declara e garante que cumpre todos os requisitos de elegibilidade.</p>
+                <h3 class="text-lg font-semibold text-white pt-4">3. DEFINIÇÕES PRINCIPAIS</h3>
+                <p><strong>"Mimos":</strong> São os créditos virtuais adquiridos pelos usuários na Loja da Plataforma. Os Mimos são necessários para iniciar conversas com outros usuários.</p>
+                <p><strong>"Carteira" / "Saldo em Reais":</strong> Representa o valor monetário acumulado por um usuário ao receber e responder a uma primeira mensagem de um chat que não seja gratuito.</p>
+                <p><strong>"Valor de Repasse":</strong> É o percentual do valor de um "Mimo" que é convertido em "Saldo em Reais" e creditado na carteira do usuário que responde à conversa.</p>
+                <h3 class="text-lg font-semibold text-white pt-4">4. FUNCIONAMENTO DA PLATAFORMA</h3>
+                <h4 class="text-md font-semibold text-gray-200 pt-2">4.1. Compra e Uso de Mimos</h4>
+                <ul class="list-disc list-inside pl-4 space-y-1">
+                    <li>Para iniciar uma conversa com outro usuário, o usuário iniciador deve possuir e utilizar um "Mimo", a menos que se qualifique para uma conversa gratuita promocional.</li>
+                    <li>Os "Mimos" são adquiridos através da Loja da Plataforma, mediante pagamento.</li>
+                    <li>Os "Mimos" são uma licença de uso limitado para funcionalidades da Plataforma. Eles não possuem valor monetário fora da Plataforma, não são passíveis de reembolso, e não podem ser trocados ou vendidos entre usuários.</li>
+                    <li>O valor Repassado em carteira pode variar conforme descontos e novos planos, determinados pela plataforma sem aviso prévio.</li>
+                </ul>
+                <h4 class="text-md font-semibold text-gray-200 pt-2">4.2. Acúmulo de Saldo em Reais</h4>
+                <ul class="list-disc list-inside pl-4 space-y-1">
+                    <li>Um usuário acumula "Saldo em Reais" em sua carteira quando responde a uma mensagem inicial de um chat pago (que consumiu um "Mimo" do remetente).</li>
+                    <li>O valor creditado corresponde ao "Valor de Repasse" definido pela Plataforma, que é um percentual sobre o custo do "Mimo".</li>
+                    <li>Nenhum valor será creditado por respostas em chats gratuitos ou por mensagens subsequentes na mesma conversa, a menos que a conversa seja reativada com um novo Mimo.</li>
+                </ul>
+                <h3 class="text-lg font-semibold text-white pt-4">5. POLÍTICA DE SAQUES</h3>
+                <h4 class="text-md font-semibold text-gray-200 pt-2">5.1. Condições para Saque</h4>
+                <ul class="list-disc list-inside pl-4 space-y-1">
+                    <li>O usuário poderá solicitar o saque do seu "Saldo em Reais" acumulado somente quando o valor atingir o montante mínimo de R$ 5,00 (cinco reais).</li>
+                    <li>Valores inferiores a R$ 5,00 não são elegíveis para saque e permanecerão na carteira do usuário.</li>
+                </ul>
+                <h4 class="text-md font-semibold text-gray-200 pt-2">5.2. Processo de Saque</h4>
+                <ul class="list-disc list-inside pl-4 space-y-1">
+                    <li>Os saques são processados via PIX. O usuário é o único responsável por fornecer uma chave PIX correta e válida em seu perfil.</li>
+                    <li>A Plataforma não se responsabiliza por transferências enviadas para chaves PIX incorretas informadas pelo usuário.</li>
+                    <li>O prazo para processamento do saque será informado no momento da solicitação.</li>                
+                </ul>
+                <h3 class="text-lg font-semibold text-white pt-4">6. CONDUTA DO USUÁRIO E CONTEÚDO</h3>
+                <p>Você concorda em não:</p>
+                <ul class="list-disc list-inside pl-4 space-y-1">
+                    <li>Publicar conteúdo que seja ilegal, odioso, ameaçador, difamatório, pornográfico ou que incite à violência.</li>
+                    <li>Usar a Plataforma para qualquer finalidade ilegal ou fraudulenta.</li>
+                    <li>Assediar, intimidar ou perseguir outros usuários.</li>
+                    <li>Criar perfis falsos, se passar por outra pessoa ou fornecer informações falsas, como idade ou identidade.</li>
+                    <li>Utilizar a Plataforma para fins comerciais, spam ou solicitação não autorizada.</li>
+                </ul>
+                <p>Reservamo-nos o direito de remover qualquer conteúdo e suspender ou excluir permanentemente contas que violem estas regras, a nosso exclusivo critério e sem aviso prévio.</p>
+                <h3 class="text-lg font-semibold text-white pt-4">7. ENCERRAMENTO E EXCLUSÃO DE CONTA</h3>
+                <h4 class="text-md font-semibold text-gray-200 pt-2">7.1. Exclusão pelo Usuário</h4>
+                <p>Você pode solicitar a exclusão da sua conta a qualquer momento através das configurações do seu perfil.</p>
+                <h4 class="text-md font-semibold text-gray-200 pt-2">7.2. Consequências da Exclusão de Conta</h4>
+                <ul class="list-disc list-inside pl-4 space-y-1">
+                    <li>A exclusão da conta é uma ação irreversível. Todos os seus dados, conversas, Mimos restantes e saldo em carteira serão permanentemente perdidos.</li>
+                    <li class="font-bold text-amber-300">PERDA DE SALDO: O usuário declara ter ciência, concorda e aceita que, ao solicitar a exclusão de sua conta, qualquer "Saldo em Reais" acumulado em sua carteira que seja inferior ao valor mínimo de saque de R$ 5,00 será perdido e retido pela Plataforma. Não haverá direito a qualquer tipo de reembolso ou pagamento por valores abaixo do mínimo de saque no momento da exclusão da conta.</li>
+                </ul>
+                <h4 class="text-md font-semibold text-gray-200 pt-2">7.3. Suspensão ou Exclusão pela Plataforma</h4>
+                <p>A Mimoly reserva-se o direito de suspender ou excluir sua conta, sem aviso prévio, caso você viole qualquer um destes Termos.</p>
+                <h3 class="text-lg font-semibold text-white pt-4">8. PROPRIEDADE INTELECTUAL</h3>
+                <p>Todos os direitos sobre a marca Mimoly, logos, software, textos e design da Plataforma são de propriedade exclusiva da Mimoly. O conteúdo gerado pelo usuário (fotos, bio, mensagens) permanece de propriedade do usuário, mas ao publicá-lo, você concede à Mimoly uma licença mundial, não exclusiva e isenta de royalties para hospedar, exibir, reproduzir e distribuir tal conteúdo com o único propósito de operar e prover os serviços da Plataforma.</p>
+                <h3 class="text-lg font-semibold text-white pt-4">9. ISENÇÃO DE GARANTIAS E LIMITAÇÃO DE RESPONSABILIDADE</h3>
+                <ul class="list-disc list-inside pl-4 space-y-1">
+                    <li>A Plataforma é fornecida "no estado em que se encontra", sem garantias de qualquer tipo. Não garantimos que o serviço será ininterrupto, seguro ou livre de erros.</li>
+                    <li>A Mimoly não realiza verificação de antecedentes criminais de seus usuários. Você é o único responsável por suas interações com outros usuários. Recomendamos cautela e bom senso.</li>
+                    <li>Em nenhuma circunstância a Mimoly será responsável por quaisquer danos indiretos, incidentais ou consequenciais (incluindo perda de dados, lucros ou danos emocionais) decorrentes do uso da Plataforma.</li>
+                </ul>
+                <h3 class="text-lg font-semibold text-white pt-4">10. MODIFICAÇÕES NOS TERMOS</h3>
+                <p>Reservamo-nos o direito de modificar estes Termos a qualquer momento. Caso haja alterações, notificaremos você através da Plataforma ou por e-mail. O uso contínuo da Plataforma após a data de vigência das alterações constituirá sua aceitação dos novos Termos.</p>
+                <h3 class="text-lg font-semibold text-white pt-4">11. LEI APLICÁVEL E FORO</h3>
+                <p>Estes Termos serão regidos e interpretados de acordo com as leis da República Federativa do Brasil para dirimir quaisquer controvérsias oriundas destes Termos.</p>
+                <h3 class="text-lg font-semibold text-white pt-4">12. CONTATO</h3>
+                <p>Em caso de dúvidas sobre estes Termos de Serviço, entre em contato conosco através do e-mail: contato@mimoly.com.br</p>
+            </div>
+            <div class="p-4 border-t border-gray-700 text-right">
+                <button id="close-terms-modal-2" class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-6 rounded-lg">Fechar</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mimoly - Extrato da Carteira</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #111827; }
+    </style>
+</head>
+<body class="text-white">
+
+    <header class="bg-black/50 backdrop-blur-sm shadow-lg sticky top-0 z-50 w-full"></header>
+
+    <main class="container mx-auto p-6 mt-8">
+        <div class="max-w-2xl mx-auto">
+            <h1 class="text-3xl font-bold text-white mb-6 text-center">Extrato da Carteira</h1>
+            <div id="statement-list" class="space-y-4">
+                </div>
+            <div id="loading-statement" class="text-center py-12">
+                <svg class="animate-spin h-10 w-10 text-pink-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <p class="text-gray-400 mt-4">Buscando movimentações...</p>
+            </div>
+             <div id="no-statement" class="hidden text-center py-12">
+                <i data-lucide="folder-open" class="w-16 h-16 text-gray-500 mx-auto mb-4"></i>
+                <p class="text-gray-400">Nenhuma movimentação encontrada.</p>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { auth, functions } from './firebase-config.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
+        import { loadHeader } from './header-loader.js';
+
+        const loadingStatement = document.getElementById('loading-statement');
+        const noStatementMessage = document.getElementById('no-statement');
+        const statementList = document.getElementById('statement-list');
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                await loadHeader();
+                try {
+                    const getWalletStatement = httpsCallable(functions, 'getWalletStatement');
+                    const result = await getWalletStatement();
+                    const transactions = result.data.transactions;
+
+                    loadingStatement.classList.add('hidden');
+
+                    if (transactions.length === 0) {
+                        noStatementMessage.classList.remove('hidden');
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    renderStatement(transactions);
+
+                } catch (error) {
+                    console.error("Erro ao carregar extrato:", error);
+                    loadingStatement.innerHTML = `<p class="text-red-400">Não foi possível carregar o extrato.</p>`;
+                }
+            } else {
+                window.location.href = '/index.html';
+            }
+        });
+
+        function renderStatement(transactions) {
+            statementList.innerHTML = '';
+            transactions.forEach(tx => {
+                const isCredit = tx.type === 'CREDIT';
+                const amountColor = isCredit ? 'text-green-400' : 'text-red-400';
+                const icon = isCredit ? 'arrow-down-left' : 'arrow-up-right';
+                const sign = isCredit ? '+' : '';
+
+                const date = new Date(tx.createdAt);
+                const formattedDate = date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+                const formattedTime = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                const txElement = document.createElement('div');
+                txElement.className = 'bg-gray-800 p-4 rounded-lg flex items-center justify-between';
+                txElement.innerHTML = `
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-gray-700 p-2 rounded-full">
+                            <i data-lucide="${icon}" class="${amountColor} w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-white">${tx.description}</p>
+                            <p class="text-sm text-gray-400">${formattedDate} às ${formattedTime}</p>
+                        </div>
+                    </div>
+                    <p class="font-bold text-lg ${amountColor}">${sign} R$ ${Math.abs(tx.amount).toFixed(2).replace('.', ',')}</p>
+                `;
+                statementList.appendChild(txElement);
+            });
+            lucide.createIcons();
+        }
+    </script>
+    <div id="terms-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+    <div class="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full flex flex-col" style="height: 80vh;">
+        <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-white">Termos de Serviço</h2>
+            <button id="close-terms-modal" class="text-gray-400 hover:text-white">&times;</button>
+        </div>
+        <div class="p-6 text-gray-300 overflow-y-auto space-y-4">
+            <p><strong>Última atualização:</strong> 12 de setembro de 2025</p>
+            <p>Bem-vindo(a) à Mimoly! Estes Termos de Serviço ("Termos") governam o seu acesso e uso da plataforma Mimoly, incluindo nosso site, aplicativos e serviços relacionados (coletivamente, a "Plataforma"). Ao criar uma conta ou utilizar nossa Plataforma, você concorda em cumprir e se vincular a estes Termos. Por favor, leia-os com atenção.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">1. ACEITAÇÃO DOS TERMOS</h3>
+            <p>Ao acessar ou usar a Plataforma, você confirma que leu, entendeu e concorda em estar legalmente vinculado a estes Termos e à nossa Política de Privacidade. Se você não concorda com estes Termos, não deve acessar ou usar a Plataforma.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">2. ELEGIBILIDADE</h3>
+            <p>Para criar uma conta e utilizar os serviços da Mimoly, você deve atender aos seguintes critérios:</p>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>Ter no mínimo 18 anos de idade. A Plataforma não se destina a menores de idade.</li>
+                <li>Não ter sido condenado(a) por crime de natureza sexual ou violenta.</li>
+                <li>Não ter sido previamente banido(a) da Plataforma por violação dos nossos Termos.</li>
+            </ul>
+            <p>Ao criar uma conta, você declara e garante que cumpre todos os requisitos de elegibilidade.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">3. DEFINIÇÕES PRINCIPAIS</h3>
+            <p><strong>"Mimos":</strong> São os créditos virtuais adquiridos pelos usuários na Loja da Plataforma. Os Mimos são necessários para iniciar conversas com outros usuários.</p>
+            <p><strong>"Carteira" / "Saldo em Reais":</strong> Representa o valor monetário acumulado por um usuário ao receber e responder a uma primeira mensagem de um chat que não seja gratuito.</p>
+            <p><strong>"Valor de Repasse":</strong> É o percentual do valor de um "Mimo" que é convertido em "Saldo em Reais" e creditado na carteira do usuário que responde à conversa.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">4. FUNCIONAMENTO DA PLATAFORMA</h3>
+            <h4 class="text-md font-semibold text-gray-200 pt-2">4.1. Compra e Uso de Mimos</h4>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>Para iniciar uma conversa com outro usuário, o usuário iniciador deve possuir e utilizar um "Mimo", a menos que se qualifique para uma conversa gratuita promocional.</li>
+                <li>Os "Mimos" são adquiridos através da Loja da Plataforma, mediante pagamento.</li>
+                <li>Os "Mimos" são uma licença de uso limitado para funcionalidades da Plataforma. Eles não possuem valor monetário fora da Plataforma, não são passíveis de reembolso, e não podem ser trocados ou vendidos entre usuários.</li>
+                <li>O valor Repassado em carteira pode variar conforme descontos e novos planos, determinados pela plataforma sem aviso prévio.</li>
+            </ul>
+            <h4 class="text-md font-semibold text-gray-200 pt-2">4.2. Acúmulo de Saldo em Reais</h4>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>Um usuário acumula "Saldo em Reais" em sua carteira quando responde a uma mensagem inicial de um chat pago (que consumiu um "Mimo" do remetente).</li>
+                <li>O valor creditado corresponde ao "Valor de Repasse", que é 50% do valor do Mimo, já deduzido de taxas e impostos.</li>
+                <li>Nenhum valor será creditado por respostas em chats gratuitos ou por mensagens subsequentes na mesma conversa, a menos que a conversa seja reativada com um novo Mimo.</li>
+            </ul>
+            <h3 class="text-lg font-semibold text-white pt-4">5. POLÍTICA DE SAQUES</h3>
+            <h4 class="text-md font-semibold text-gray-200 pt-2">5.1. Condições para Saque</h4>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>O usuário poderá solicitar o saque do seu "Saldo em Reais" acumulado somente quando o valor atingir o montante mínimo de R$ 5,00 (cinco reais).</li>
+                <li>Valores inferiores a R$ 5,00 não são elegíveis para saque e permanecerão na carteira do usuário.</li>
+            </ul>
+            <h4 class="text-md font-semibold text-gray-200 pt-2">5.2. Processo de Saque</h4>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>Os saques são processados via PIX. O usuário é o único responsável por fornecer uma chave PIX correta e válida em seu perfil.</li>
+                <li>A Plataforma não se responsabiliza por transferências enviadas para chaves PIX incorretas informadas pelo usuário.</li>
+                <li>O prazo para processamento do saque será informado no momento da solicitação.</li>
+            </ul>
+            <h3 class="text-lg font-semibold text-white pt-4">6. CONDUTA DO USUÁRIO E CONTEÚDO</h3>
+            <p>Você concorda em não:</p>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>Publicar conteúdo que seja ilegal, odioso, ameaçador, difamatório, pornográfico ou que incite à violência.</li>
+                <li>Usar a Plataforma para qualquer finalidade ilegal ou fraudulenta.</li>
+                <li>Assediar, intimidar ou perseguir outros usuários.</li>
+                <li>Criar perfis falsos, se passar por outra pessoa ou fornecer informações falsas, como idade ou identidade.</li>
+                <li>Utilizar a Plataforma para fins comerciais, spam ou solicitação não autorizada.</li>
+            </ul>
+            <p>Reservamo-nos o direito de remover qualquer conteúdo e suspender ou excluir permanentemente contas que violem estas regras, a nosso exclusivo critério e sem aviso prévio.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">7. ENCERRAMENTO E EXCLUSÃO DE CONTA</h3>
+            <h4 class="text-md font-semibold text-gray-200 pt-2">7.1. Exclusão pelo Usuário</h4>
+            <p>Você pode solicitar a exclusão da sua conta a qualquer momento através das configurações do seu perfil.</p>
+            <h4 class="text-md font-semibold text-gray-200 pt-2">7.2. Consequências da Exclusão de Conta</h4>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>A exclusão da conta é uma ação irreversível. Todos os seus dados, conversas, Mimos restantes e saldo em carteira serão permanentemente perdidos.</li>
+                <li class="font-bold text-amber-300">PERDA DE SALDO: O usuário declara ter ciência, concorda e aceita que, ao solicitar a exclusão de sua conta, qualquer "Saldo em Reais" acumulado em sua carteira que seja inferior ao valor mínimo de saque de R$ 5,00 será perdido e retido pela Plataforma. Não haverá direito a qualquer tipo de reembolso ou pagamento por valores abaixo do mínimo de saque no momento da exclusão da conta.</li>
+            </ul>
+            <h4 class="text-md font-semibold text-gray-200 pt-2">7.3. Suspensão ou Exclusão pela Plataforma</h4>
+            <p>A Mimoly reserva-se o direito de suspender ou excluir sua conta, sem aviso prévio, caso você viole qualquer um destes Termos.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">8. PROPRIEDADE INTELECTUAL</h3>
+            <p>Todos os direitos sobre a marca Mimoly, logos, software, textos e design da Plataforma são de propriedade exclusiva da Mimoly. O conteúdo gerado pelo usuário (fotos, bio, mensagens) permanece de propriedade do usuário, mas ao publicá-lo, você concede à Mimoly uma licença mundial, não exclusiva e isenta de royalties para hospedar, exibir, reproduzir e distribuir tal conteúdo com o único propósito de operar e prover os serviços da Plataforma.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">9. ISENÇÃO DE GARANTIAS E LIMITAÇÃO DE RESPONSABILIDADE</h3>
+            <ul class="list-disc list-inside pl-4 space-y-1">
+                <li>A Plataforma é fornecida "no estado em que se encontra", sem garantias de qualquer tipo. Não garantimos que o serviço será ininterrupto, seguro ou livre de erros.</li>
+                <li>A Mimoly não realiza verificação de antecedentes criminais de seus usuários. Você é o único responsável por suas interações com outros usuários. Recomendamos cautela e bom senso.</li>
+                <li>Em nenhuma circunstância a Mimoly será responsável por quaisquer danos indiretos, incidentais ou consequenciais (incluindo perda de dados, lucros ou danos emocionais) decorrentes do uso da Plataforma.</li>
+            </ul>
+            <h3 class="text-lg font-semibold text-white pt-4">10. MODIFICAÇÕES NOS TERMOS</h3>
+            <p>Reservamo-nos o direito de modificar estes Termos a qualquer momento. Caso haja alterações, notificaremos você através da Plataforma ou por e-mail. O uso contínuo da Plataforma após a data de vigência das alterações constituirá sua aceitação dos novos Termos.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">11. LEI APLICÁVEL E FORO</h3>
+            <p>Estes Termos serão regidos e interpretados de acordo com as leis da República Federativa do Brasil para dirimir quaisquer controvérsias oriundas destes Termos.</p>
+            <h3 class="text-lg font-semibold text-white pt-4">12. CONTATO</h3>
+            <p>Em caso de dúvidas sobre estes Termos de Serviço, entre em contato conosco através do e-mail: contato@mimoly.com.br</p>
+        </div>
+        <div class="p-4 border-t border-gray-700 text-right">
+            <button id="close-terms-modal-2" class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-6 rounded-lg">Fechar</button>
+        </div>
+    </div>
+</div>
+<script>
+    const termsModal = document.getElementById('terms-modal');
+    const openTermsLink = document.getElementById('open-terms-modal-mobile');
+    const closeTermsBtn = document.getElementById('close-terms-modal');
+    const closeTermsBtn2 = document.getElementById('close-terms-modal-2');
+
+    function openTermsModal(e) {
+        if (e) e.preventDefault();
+        termsModal.classList.remove('hidden');
+    }
+
+    function closeTermsModal() {
+        termsModal.classList.add('hidden');
+    }
+
+    if (openTermsLink) {
+        openTermsLink.addEventListener('click', openTermsModal);
+    }
+    
+    closeTermsBtn.addEventListener('click', closeTermsModal);
+    closeTermsBtn2.addEventListener('click', closeTermsModal);
+</script>
+</body>
+</html>
